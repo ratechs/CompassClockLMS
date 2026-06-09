@@ -56,7 +56,6 @@ if (!fs.existsSync(clientBuildPath)) {
   console.error(chalk.red('❌ React build directory not found at:', clientBuildPath));
 } else {
   console.log(chalk.green('✅ React build directory found'));
-  console.log('Files in build directory:', fs.readdirSync(clientBuildPath));
 }
 
 app.use(express.static(clientBuildPath));

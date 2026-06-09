@@ -132,37 +132,67 @@ const TestFormReact = () => {
   };
 
   const nextTab = () => {
-    if (activeTab === "details") setActiveTab("questions");
-    else if (activeTab === "questions") setActiveTab("solutions");
+    if (activeTab === "details") {
+      setActiveTab(
+        testForm.test_type === "assessment"
+          ? "assesment_questions"
+          : "questions"
+      );
+    } else if (
+      activeTab === "questions" ||
+      activeTab === "assesment_questions"
+    ) {
+      setActiveTab("solutions");
+    }
   };
 
   const prevTab = () => {
-    if (activeTab === "solutions") setActiveTab("questions");
-    else if (activeTab === "questions") setActiveTab("details");
-  };
-
-  const saveTest = async () => {
-    try {
-      if (!id) {
-        await createTest(testForm);
-        toast.success("Test saved successfully!");
-      } else {
-        await updateTest(id, testForm);
-        toast.success("Test updated successfully!");
-      }
-      setTestForm({
-        test_name: "",
-        test_type: "pre-test",
-        test_duration: "",
-        test_subject: "",
-        test_lesson: "",
-        test_questions: [defaultQuestion()],
-      });
+    if (activeTab === "solutions") {
+      setActiveTab(
+        testForm.test_type === "assessment"
+          ? "assesment_questions"
+          : "questions"
+      );
+    } else if (
+      activeTab === "questions" ||
+      activeTab === "assesment_questions"
+    ) {
       setActiveTab("details");
-    } catch (error) {
-      console.error("Error saving test:", error);
     }
   };
+  const saveTest = async () => {
+    try {
+      const payload = {
+        ...testForm,
+        test_questions: testForm.test_questions.map((q) => ({
+          ...q,
+          ...(testForm.test_type === "assessment"
+            ? {
+                correct_options: [],
+                correct_option_text: "",
+                positive_mark: 0,
+                negative_mark: 0,
+              }
+            : {}),
+        })),
+      };
+  
+      if (!id) {
+        await createTest(payload);
+        toast.success("Test saved successfully!");
+      } else {
+        await updateTest(id, payload);
+        toast.success("Test updated successfully!");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const tabs =
+  testForm.test_type === "assessment"
+    ? ["details", "assesment_questions", "solutions"]
+    : ["details", "questions", "solutions"];
 
   console.log("The test Form ", testForm);
 
@@ -170,17 +200,19 @@ const TestFormReact = () => {
     <div className="test-form-container">
       <h1 className="test-form-heading">{id ? "Edit Test" : "Add Test"}</h1>
 
-      <div className="test-tabs">
-        {["details", "questions", "solutions"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={activeTab === tab ? "active" : ""}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
+        <div className="test-tabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={activeTab === tab ? "active" : ""}
+            >
+              {tab
+                .replace("_", " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())}
+            </button>
+          ))}
+        </div>
 
       {activeTab === "details" && (
         <form
@@ -208,6 +240,7 @@ const TestFormReact = () => {
             >
               <option value="pre-test">Pre Test</option>
               <option value="post-test">Post Test</option>
+              <option value="assessment">Assesment</option>
             </select>
           </div>
           <div className="form-group">
@@ -317,9 +350,9 @@ const TestFormReact = () => {
                 <>
                   <div className="form-group">
                     <label className="form-label">Options</label>
-                    <div className="options-for-question">
+                    <div className="options-for-question row">
                       {question.question_options.map((option, oIndex) => (
-                        <div key={oIndex} className="option-item">
+                        <div key={oIndex} className="option-item col-md-6">
                           {/* <input
                             type="text"
                             className="form-input"
@@ -337,20 +370,20 @@ const TestFormReact = () => {
                               handleOptionChange(qIndex, oIndex, content)
                             }
                           />
-                          <input
-                            type="radio"
-                            checked={question.correct_options.includes(
-                              String.fromCharCode(65 + oIndex)
-                            )}
-                            onChange={() =>
-                              updateCorrectOptionText(qIndex, oIndex)
-                            }
-                            onLoadStart={() =>
-                              console.log(
-                                `Correct Option: ${question.correct_options}`
-                              )
-                            }
-                          />
+                          {testForm.test_type !== "assessment" && (
+                            <>
+                              <input
+                                type="radio"
+                                checked={question.correct_options.includes(
+                                  String.fromCharCode(65 + oIndex)
+                                )}
+                                onChange={() =>
+                                  updateCorrectOptionText(qIndex, oIndex)
+                                }
+                              />
+                              <label>{String.fromCharCode(65 + oIndex)}</label>
+                            </>
+                          )}
                           <label>{String.fromCharCode(65 + oIndex)}</label>
                           <button
                             type="button"
@@ -371,33 +404,37 @@ const TestFormReact = () => {
                     </button>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Correct Option Text</label>
-                    <input
-                      type="text"
-                      value={question.correct_option_text}
-                      disabled
-                      className="form-input"
-                    />
-                  </div>
+                  {testForm.test_type !== "assessment" && (
+                    <div className="form-group">
+                      <label className="form-label">Correct Option Text</label>
+                      <input
+                        type="text"
+                        value={question.correct_option_text}
+                        disabled
+                        className="form-input"
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
-              <div className="form-group">
-                <label className="form-label">Marks</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={question.positive_mark}
-                  onChange={(e) =>
-                    handleQuestionChange(
-                      qIndex,
-                      "positive_mark",
-                      parseInt(e.target.value)
-                    )
-                  }
-                />
-              </div>
+              {testForm.test_type !== "assessment" && (
+                <div className="form-group">
+                  <label className="form-label">Marks</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={question.positive_mark}
+                    onChange={(e) =>
+                      handleQuestionChange(
+                        qIndex,
+                        "positive_mark",
+                        parseInt(e.target.value)
+                      )
+                    }
+                  />
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Solution</label>
@@ -409,21 +446,23 @@ const TestFormReact = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Negative Marks</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={question.negative_mark}
-                  onChange={(e) =>
-                    handleQuestionChange(
-                      qIndex,
-                      "negative_mark",
-                      parseInt(e.target.value)
-                    )
-                  }
-                />
-              </div>
+                {testForm.test_type !== "assessment" && (
+                  <div className="form-group">
+                    <label className="form-label">Negative Marks</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={question.negative_mark}
+                      onChange={(e) =>
+                        handleQuestionChange(
+                          qIndex,
+                          "negative_mark",
+                          parseInt(e.target.value)
+                        )
+                      }
+                    />
+                  </div>
+                )}
             </div>
           ))}
 

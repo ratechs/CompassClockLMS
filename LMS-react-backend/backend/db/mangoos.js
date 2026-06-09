@@ -1,19 +1,28 @@
-import mongoose from "mongoose"
-import dotenv from 'dotenv'
-import chalk from 'chalk'
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import chalk from "chalk";
+import dns from "node:dns";
 
 dotenv.config();
 
-const mongoDb = async() => {
-    try {
-        // await mongoose.connect(`mongodb+srv://${process.env.MANGO_DB_USER}:${process.env.MANGO_DB_PASSWORD}@cluster0.uku31b0.mongodb.net/${process.env.MANGO_DB_NAME}?retryWrites=true&w=majority&appName=Cluster0`)
-        await mongoose.connect('mongodb+srv://xoftsis:xwRk3dhJPF3Mq244@cluster0.rz7ta.mongodb.net/LMS?retryWrites=true&w=majority&appName=Cluster0')
-        console.log(chalk.yellow("Connected to MongoDB"))
-        
-    } catch (error) {
-        console.error("error connecting mongodb", error)
-        console.table(error)
-    }
-}
+// Workaround for DNS issues on some networks
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
-export default mongoDb
+const mongoDb = async () => {
+  try {
+    const uri =
+      "mongodb+srv://admin:beternalAdmin@beternal.vnmk00p.mongodb.net/LMS?retryWrites=true&w=majority&appName=Beternal";
+
+    await mongoose.connect(uri);
+
+    console.log(chalk.green("✅ Connected to MongoDB"));
+  } catch (error) {
+    console.error(chalk.red("❌ Error connecting MongoDB"));
+    console.error(error);
+
+    // Re-throw so app startup fails if DB is unavailable
+    throw error;
+  }
+};
+
+export default mongoDb;

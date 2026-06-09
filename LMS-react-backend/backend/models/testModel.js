@@ -44,7 +44,7 @@ const testSchema = new mongoose.Schema({
     },
     test_type: {
         type: String,
-        enum: ['pre-test', 'post-test'],
+        enum: ['pre-test', 'post-test', 'assessment'],
         required: true
     },
     test_subject: {

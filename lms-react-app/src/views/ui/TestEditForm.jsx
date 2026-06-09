@@ -200,6 +200,7 @@ const TestFormReact = () => {
             >
               <option value="pre-test">Pre Test</option>
               <option value="post-test">Post Test</option>
+              <option value="assessment">Assesment</option>
             </select>
           </div>
           <div className="form-group">
