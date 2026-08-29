@@ -7,8 +7,8 @@ const useSignup = () => {
   const [loading, setLoading] = useState(false)
   const {authUser, setAuthUser}= useAuthcontext()
 
-    const signup = async ({ email, username, phoneNumber, password, confirmPassword }) => {
-        const success = handleInputErrors({ email, username, phoneNumber, password, confirmPassword })
+    const signup = async ({ fullname, email, username, phoneNumber, password, confirmPassword }) => {
+        const success = handleInputErrors({ fullname, email, username, phoneNumber, password, confirmPassword })
 
         if(!success) return
 
@@ -20,7 +20,7 @@ const useSignup = () => {
                 headers: {
                       'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, username, phoneNumber, password, confirmPassword })
+                body: JSON.stringify({ fullname, email, username, phoneNumber, password, confirmPassword })
             })
 
             if (!res.ok) {
@@ -48,7 +48,7 @@ const useSignup = () => {
 
 export default useSignup
 
-function handleInputErrors({ email, username, phoneNumber,password, confirmPassword }){
+function handleInputErrors({ fullname, email, username, phoneNumber,password, confirmPassword }){
     if(!email || !username || !password || !confirmPassword){
         toast.error('Please fill all the feilds')
         return false

@@ -1,0 +1,2269 @@
+/* =====================================================
+   GLOBAL BOX SIZING
+====================================================== */
+
+.user-list-page,
+.user-list-page *,
+.user-list-page *::before,
+.user-list-page *::after {
+  box-sizing: border-box;
+}
+
+.user-list-page {
+  width: 100%;
+  max-width: 83%;
+  min-width: 0;
+  padding: 20px;
+  background: #f8fafc;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+
+/* =====================================================
+   HEADER
+====================================================== */
+
+.user-page-header {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.user-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  min-width: 0;
+}
+
+.user-title-icon {
+  width: 48px;
+  height: 48px;
+
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eef2ff;
+  color: #4f46e5;
+
+  font-size: 20px;
+
+  flex-shrink: 0;
+}
+
+.user-page-title {
+  margin: 0;
+
+  font-size: 26px;
+  font-weight: 700;
+
+  color: #111827;
+
+  white-space: nowrap;
+}
+
+.user-page-subtitle {
+  margin: 4px 0 0;
+
+  color: #6b7280;
+  font-size: 14px;
+
+  white-space: nowrap;
+}
+
+.refresh-users-btn {
+  flex-shrink: 0;
+
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+
+  border-radius: 9px;
+
+  padding: 9px 15px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.refresh-users-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.refresh-users-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* =====================================================
+   SUMMARY
+====================================================== */
+
+.user-summary {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: 16px;
+
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  min-width: 0;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  padding: 18px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.summary-card > div:last-child {
+  min-width: 0;
+}
+
+.summary-icon {
+  width: 44px;
+  height: 44px;
+
+  border-radius: 11px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+
+  flex-shrink: 0;
+}
+
+.summary-blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.summary-green {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.summary-purple {
+  background: #faf5ff;
+  color: #9333ea;
+}
+
+.summary-orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.summary-label {
+  display: block;
+
+  color: #6b7280;
+  font-size: 12px;
+
+  margin-bottom: 3px;
+
+  white-space: nowrap;
+}
+
+.summary-value {
+  display: block;
+
+  color: #111827;
+  font-size: 22px;
+
+  line-height: 1;
+}
+
+
+/* =====================================================
+   MAIN CARD
+====================================================== */
+
+.users-main-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+
+/* =====================================================
+   ROLE TABS
+====================================================== */
+
+.role-tabs-wrapper {
+  width: 100%;
+  max-width: 100%;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  padding: 0 20px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: thin;
+}
+
+.role-tabs {
+  display: flex;
+  align-items: stretch;
+
+  gap: 4px;
+
+  width: max-content;
+  min-width: 100%;
+}
+
+.role-tab {
+  border: 0;
+
+  background: transparent;
+
+  color: #6b7280;
+
+  padding: 15px 14px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  position: relative;
+
+  white-space: nowrap;
+
+  flex-shrink: 0;
+
+  transition: color 0.2s ease;
+}
+
+.role-tab:hover {
+  color: #4f46e5;
+}
+
+.role-tab-active {
+  color: #4f46e5;
+}
+
+.role-tab-active::after {
+  content: "";
+
+  position: absolute;
+
+  bottom: -1px;
+
+  left: 10px;
+  right: 10px;
+
+  height: 2px;
+
+  background: #4f46e5;
+
+  border-radius: 2px 2px 0 0;
+}
+
+.role-tab-icon {
+  font-size: 13px;
+}
+
+.role-tab-count {
+  min-width: 22px;
+  height: 22px;
+
+  padding: 0 6px;
+
+  border-radius: 20px;
+
+  background: #f3f4f6;
+  color: #6b7280;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 11px;
+
+  flex-shrink: 0;
+}
+
+.role-tab-active .role-tab-count {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+
+/* =====================================================
+   FILTERS
+====================================================== */
+
+.users-filter-area {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  padding: 18px 20px;
+
+  background: #fafafa;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.filter-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 15px;
+
+  margin-bottom: 14px;
+}
+
+.filter-title {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  color: #374151;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.filter-title svg {
+  color: #6366f1;
+}
+
+.clear-filter-btn {
+  flex-shrink: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #6366f1;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  padding: 5px 0;
+
+  white-space: nowrap;
+}
+
+.clear-filter-btn:hover {
+  color: #4338ca;
+  text-decoration: underline;
+}
+
+.filter-grid {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.filter-field {
+  min-width: 0;
+  width: 100%;
+}
+
+.filter-field label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #4b5563;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.filter-field input,
+.filter-field select {
+  display: block;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  height: 38px;
+
+  border: 1px solid #dfe3e8;
+
+  border-radius: 8px;
+
+  padding: 0 10px;
+
+  background: #ffffff;
+
+  color: #374151;
+
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.filter-field input::placeholder {
+  color: #9ca3af;
+}
+
+.filter-field input:focus,
+.filter-field select:focus {
+  border-color: #818cf8;
+
+  box-shadow:
+    0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+
+/* =====================================================
+   TABLE CONTAINER
+====================================================== */
+
+.user-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  -webkit-overflow-scrolling: touch;
+
+  overscroll-behavior-x: contain;
+}
+
+.user-table {
+  width: 100%;
+
+  /*
+     Important:
+     Do NOT use 1100px here.
+     Let the table naturally become wider than the
+     container and let the wrapper handle scrolling.
+  */
+  min-width: 950px;
+
+  border-collapse: collapse;
+
+  background: #ffffff;
+}
+
+.user-table thead {
+  background: #f9fafb;
+}
+
+.user-table th {
+  padding: 13px 16px;
+
+  text-align: left;
+
+  color: #6b7280;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.04em;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  white-space: nowrap;
+}
+
+.user-table td {
+  padding: 13px 16px;
+
+  border-bottom: 1px solid #f0f1f3;
+
+  color: #374151;
+
+  font-size: 13px;
+
+  vertical-align: middle;
+
+  white-space: nowrap;
+}
+
+.user-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.user-table tbody tr:hover {
+  background: #fafbff;
+}
+
+.user-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.actions-header {
+  text-align: center !important;
+}
+
+
+/* =====================================================
+   USER
+====================================================== */
+
+.user-info {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  min-width: 180px;
+  max-width: 260px;
+}
+
+.user-avatar {
+  width: 38px;
+  height: 38px;
+
+  border-radius: 50%;
+
+  background: #eef2ff;
+  color: #4f46e5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  overflow: hidden;
+
+  flex-shrink: 0;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.user-name-wrapper {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.user-name-wrapper strong {
+  color: #111827;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-name-wrapper small {
+  margin-top: 2px;
+
+  color: #9ca3af;
+
+  font-size: 11px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* =====================================================
+   EMAIL
+====================================================== */
+
+.email-text {
+  display: inline-block;
+
+  max-width: 240px;
+
+  color: #4b5563;
+
+  font-size: 12px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  vertical-align: middle;
+}
+
+
+/* =====================================================
+   ROLE BADGE
+====================================================== */
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 9px;
+
+  border-radius: 20px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-transform: capitalize;
+}
+
+.role-student {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.role-teacher {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.role-admin {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.role-coordinator {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.role-user {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+
+/* =====================================================
+   ADMIN
+====================================================== */
+
+.admin-badge,
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.admin-badge {
+  color: #c2410c;
+}
+
+.user-badge {
+  color: #6b7280;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: currentColor;
+
+  display: inline-block;
+
+  flex-shrink: 0;
+}
+
+
+/* =====================================================
+   STATUS
+====================================================== */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 5px 9px;
+
+  border-radius: 20px;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-active {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.status-blocked {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+
+/* =====================================================
+   APPROVAL TOGGLE
+====================================================== */
+
+.approval-control {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  white-space: nowrap;
+}
+
+.approval-toggle {
+  border: 0;
+
+  background: transparent;
+
+  padding: 0;
+
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+
+  flex-shrink: 0;
+}
+
+.approval-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.approval-toggle:focus-visible {
+  outline: 2px solid #6366f1;
+
+  outline-offset: 3px;
+
+  border-radius: 20px;
+}
+
+.approval-toggle-track {
+  width: 42px;
+  height: 24px;
+
+  border-radius: 50px;
+
+  background: #d1d5db;
+
+  padding: 3px;
+
+  display: flex;
+  align-items: center;
+
+  box-sizing: border-box;
+
+  transition: all 0.25s ease;
+}
+
+.approval-toggle-thumb {
+  width: 18px;
+  height: 18px;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 9px;
+
+  color: #16a34a;
+
+  transform: translateX(0);
+
+  transition: transform 0.25s ease;
+
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.approval-toggle.approved
+  .approval-toggle-track {
+  background: #22c55e;
+}
+
+.approval-toggle.approved
+  .approval-toggle-thumb {
+  transform: translateX(18px);
+}
+
+.approval-toggle:hover:not(:disabled)
+  .approval-toggle-track {
+  box-shadow:
+    0 0 0 3px rgba(34, 197, 94, 0.12);
+}
+
+.approval-label {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 4px;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.approved-label {
+  color: #15803d;
+}
+
+.pending-label {
+  color: #6b7280;
+}
+
+
+/* =====================================================
+   TOGGLE SPINNER
+====================================================== */
+
+.toggle-spinner {
+  width: 10px;
+  height: 10px;
+
+  border: 2px solid #d1d5db;
+
+  border-top-color: #16a34a;
+
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+}
+
+
+/* =====================================================
+   REGISTERED
+====================================================== */
+
+.registered-date {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   ACTIONS
+====================================================== */
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+}
+
+.user-action {
+  width: 32px;
+  height: 32px;
+
+  border: 1px solid transparent;
+
+  border-radius: 8px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  font-size: 12px;
+
+  transition: all 0.2s ease;
+}
+
+.user-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.view-action {
+  color: #047857;
+  background:#b5f3e1;
+}
+
+.edit-action {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.edit-action:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+.block-action {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.block-action:hover:not(:disabled) {
+  background: #fef3c7;
+}
+
+.unblock-action {
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
+.unblock-action:hover:not(:disabled) {
+  background: #dcfce7;
+}
+
+.delete-action {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.delete-action:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+
+/* =====================================================
+   BUTTON SPINNER
+====================================================== */
+
+.button-spinner {
+  width: 12px;
+  height: 12px;
+
+  border: 2px solid currentColor;
+
+  border-right-color: transparent;
+
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+}
+
+
+/* =====================================================
+   LOADING
+====================================================== */
+
+.table-message {
+  height: 280px;
+
+  text-align: center !important;
+}
+
+.loading-state {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+
+  border: 3px solid #e5e7eb;
+
+  border-top-color: #6366f1;
+
+  border-radius: 50%;
+
+  animation: spin 0.8s linear infinite;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+====================================================== */
+
+.empty-state {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px 20px;
+}
+
+.empty-icon {
+  width: 52px;
+  height: 52px;
+
+  border-radius: 50%;
+
+  background: #f3f4f6;
+  color: #9ca3af;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 19px;
+
+  margin-bottom: 12px;
+}
+
+.empty-state h5 {
+  margin: 0 0 5px;
+
+  color: #374151;
+
+  font-size: 15px;
+}
+
+.empty-state p {
+  margin: 0 0 15px;
+
+  color: #9ca3af;
+
+  font-size: 12px;
+}
+
+.empty-clear-btn {
+  border: 1px solid #e5e7eb;
+
+  background: #ffffff;
+
+  color: #4f46e5;
+
+  padding: 7px 13px;
+
+  border-radius: 7px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.empty-clear-btn:hover {
+  background: #f5f3ff;
+}
+
+
+/* =====================================================
+   PAGINATION
+====================================================== */
+
+.users-pagination {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  padding: 14px 20px;
+
+  border-top: 1px solid #e5e7eb;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+}
+
+.pagination-results {
+  color: #6b7280;
+  font-size: 12px;
+
+  white-space: nowrap;
+}
+
+.pagination-results strong {
+  color: #374151;
+}
+
+.pagination-controls {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  flex-shrink: 0;
+}
+
+.pagination-controls button {
+  border: 1px solid #e5e7eb;
+
+  background: #ffffff;
+
+  color: #374151;
+
+  border-radius: 7px;
+
+  padding: 7px 11px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-controls span {
+  color: #6b7280;
+
+  font-size: 12px;
+
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   ANIMATION
+====================================================== */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =====================================================
+   LARGE TABLET
+====================================================== */
+
+@media (max-width: 1380px) {
+
+  .user-summary {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr));
+  }
+
+  .filter-grid {
+    grid-template-columns:
+      repeat(7, minmax(0, 1fr));
+  }
+}
+
+
+/* =====================================================
+   TABLET
+====================================================== */
+
+@media (max-width: 900px) {
+
+  .user-list-page {
+    padding: 16px;
+  }
+
+  .user-page-header {
+    align-items: flex-start;
+  }
+
+  .user-page-title {
+    font-size: 23px;
+  }
+
+  .user-page-subtitle {
+    font-size: 13px;
+  }
+
+  .filter-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .user-table {
+    min-width: 950px;
+  }
+}
+
+
+/* =====================================================
+   MOBILE
+====================================================== */
+
+@media (max-width: 768px) {
+
+  .user-list-page {
+    width: 100%;
+    max-width: 100%;
+
+    padding: 12px;
+
+    overflow-x: hidden;
+  }
+
+
+  /* HEADER */
+
+  .user-page-header {
+    width: 100%;
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 14px;
+
+    margin-bottom: 18px;
+  }
+
+  .user-title-wrapper {
+    width: 100%;
+  }
+
+  .user-page-title {
+    font-size: 21px;
+
+    white-space: normal;
+  }
+
+  .user-page-subtitle {
+    font-size: 12px;
+
+    white-space: normal;
+  }
+
+  .refresh-users-btn {
+    width: 100%;
+  }
+
+
+  /* SUMMARY */
+
+  .user-summary {
+    grid-template-columns:
+      repeat(5, minmax(0, 1fr));
+
+    gap: 10px;
+
+    margin-bottom: 16px;
+  }
+
+  .summary-card {
+    padding: 13px;
+
+    gap: 10px;
+
+    border-radius: 11px;
+
+    min-width: 0;
+  }
+
+  .summary-icon {
+    width: 36px;
+    height: 36px;
+
+    font-size: 14px;
+  }
+
+  .summary-label {
+    font-size: 10px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .summary-value {
+    font-size: 18px;
+  }
+
+
+  /* ROLE TABS */
+
+  .role-tabs-wrapper {
+    padding: 0 10px;
+
+    overflow-x: auto;
+  }
+
+  .role-tabs {
+    width: max-content;
+    min-width: max-content;
+  }
+
+  .role-tab {
+    padding: 13px 10px;
+
+    font-size: 12px;
+  }
+
+
+  /* FILTER */
+
+  .users-filter-area {
+    padding: 15px;
+  }
+
+  .filter-heading {
+    margin-bottom: 12px;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+
+  /* TABLE */
+
+  /*
+     IMPORTANT:
+     The table itself is allowed to be wider.
+     Only .user-table-wrapper scrolls.
+  */
+
+  .user-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: auto;
+  }
+
+  .user-table {
+    width: 950px;
+    min-width: 950px;
+  }
+
+
+  /* PAGINATION */
+
+  .users-pagination {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    padding: 13px 15px;
+
+    gap: 12px;
+  }
+
+  .pagination-results {
+    width: 100%;
+
+    white-space: normal;
+  }
+
+  .pagination-controls {
+    width: 100%;
+
+    justify-content: space-between;
+  }
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+====================================================== */
+
+@media (max-width: 480px) {
+
+  .user-list-page {
+    padding: 10px;
+  }
+
+  .user-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .user-title-wrapper {
+    gap: 10px;
+  }
+
+  .user-title-icon {
+    width: 40px;
+    height: 40px;
+
+    font-size: 16px;
+  }
+
+  .user-page-title {
+    font-size: 20px;
+  }
+
+  .user-page-subtitle {
+    font-size: 11px;
+  }
+
+  .users-filter-area {
+    padding: 13px;
+  }
+
+  .filter-heading {
+    align-items: flex-start;
+  }
+
+  .filter-title {
+    font-size: 13px;
+  }
+
+  .clear-filter-btn {
+    font-size: 11px;
+  }
+
+  .pagination-controls {
+    gap: 6px;
+  }
+
+  .pagination-controls button {
+    padding: 7px 9px;
+  }
+
+  .pagination-controls span {
+    font-size: 11px;
+  }
+}
+
+
+/* =====================================================
+   VERY SMALL DEVICES
+====================================================== */
+
+@media (max-width: 360px) {
+
+  .user-list-page {
+    padding: 8px;
+  }
+
+  .summary-card {
+    padding: 11px;
+  }
+
+  .summary-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .role-tabs-wrapper {
+    padding: 0 6px;
+  }
+
+  .users-pagination {
+    padding: 12px;
+  }
+}
+
+/* =========================================================
+   User View SCSS
+========================================================= */
+
+.user-view-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.user-view-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  gap: 15px;
+}
+
+.user-view-back-btn {
+  color: #6b7280 !important;
+  text-decoration: none !important;
+  padding: 7px 0 !important;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-view-back-btn:hover {
+  color: #4f46e5 !important;
+}
+
+.user-view-edit-btn {
+  border-radius: 8px !important;
+  padding: 9px 15px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+/* =========================================================
+   PROFILE HEADER
+========================================================= */
+
+.user-view-profile-card {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 15px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.user-view-profile-card .card-body {
+  padding: 25px;
+}
+
+.user-view-profile {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.user-view-avatar {
+  width: 82px;
+  height: 82px;
+  border-radius: 18px;
+  background: linear-gradient(
+    135deg,
+    #eef2ff,
+    #e0e7ff
+  );
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+}
+
+.user-view-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.user-view-online-dot {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  right: -2px;
+  bottom: 4px;
+  border: 3px solid #ffffff;
+}
+
+.user-view-online-dot.active {
+  background: #22c55e;
+}
+
+.user-view-online-dot.inactive {
+  background: #ef4444;
+}
+
+.user-view-profile-info {
+  min-width: 0;
+}
+
+.user-view-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-view-name-row h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.user-view-verified {
+  color: #2563eb;
+  font-size: 17px;
+}
+
+.user-view-username {
+  margin: 4px 0 10px;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.user-view-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.user-view-role-badge,
+.user-view-status-badge,
+.user-view-approval-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 20px;
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.user-view-role-student {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.user-view-role-teacher {
+  color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.user-view-role-admin {
+  color: #c2410c;
+  background: #fff7ed;
+}
+
+.user-view-role-coordinator {
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.user-view-role-default {
+  color: #4b5563;
+  background: #f3f4f6;
+}
+
+.user-view-status-badge.active {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.user-view-status-badge.blocked {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.user-view-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.user-view-approval-badge.approved {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.user-view-approval-badge.pending {
+  color: #92400e;
+  background: #fffbeb;
+}
+
+/* =========================================================
+   ACCOUNT SUMMARY
+========================================================= */
+
+.user-view-account-summary {
+  display: flex;
+  justify-content: flex-end;
+  gap: 28px;
+}
+
+.user-view-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.summary-item-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-view-summary-item small {
+  display: block;
+  color: #9ca3af;
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+.user-view-summary-item strong {
+  display: block;
+  color: #374151;
+  font-size: 13px;
+}
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.user-view-content {
+  row-gap: 18px;
+}
+
+.user-view-content > [class*="col-"] {
+  min-width: 0;
+}
+
+.user-view-card {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.025);
+  margin-bottom: 18px;
+}
+
+.user-view-card .card-body {
+  padding: 20px;
+}
+
+/* =========================================================
+   CARD HEADER
+========================================================= */
+
+.user-view-card-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 22px;
+}
+
+.user-view-section-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-view-section-icon.blue {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.user-view-section-icon.purple {
+  color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.user-view-section-icon.green {
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
+.user-view-section-icon.orange {
+  color: #ea580c;
+  background: #fff7ed;
+}
+
+.user-view-section-icon.gray {
+  color: #4b5563;
+  background: #f3f4f6;
+}
+
+.user-view-card-header h5 {
+  margin: 0;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.user-view-card-header p {
+  margin: 3px 0 0;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+/* =========================================================
+   INFORMATION
+========================================================= */
+
+.user-view-info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-view-info-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #f9fafb;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.user-view-info-item span {
+  display: block;
+  color: #9ca3af;
+  font-size: 10px;
+  margin-bottom: 3px;
+}
+
+.user-view-info-item strong {
+  display: block;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.user-view-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-view-status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f1f2f4;
+}
+
+.user-view-status-item:last-child {
+  border-bottom: 0;
+}
+
+.status-item-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.user-view-status-item strong {
+  font-size: 11px;
+}
+
+.status-success {
+  color: #16a34a;
+}
+
+.status-muted {
+  color: #9ca3af;
+}
+
+/* =========================================================
+   COURSES
+========================================================= */
+
+.user-view-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-view-course-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid #f0f1f3;
+  border-radius: 9px;
+  transition: all 0.2s ease;
+}
+
+.user-view-course-item:hover {
+  border-color: #c7d2fe;
+  background: #fafbff;
+  transform: translateX(2px);
+}
+
+.course-number {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.course-info {
+  min-width: 0;
+}
+
+.course-info strong {
+  display: block;
+  color: #374151;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.course-info small {
+  display: block;
+  margin-top: 2px;
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+/* =========================================================
+   GROUPS
+========================================================= */
+
+.user-view-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.user-view-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: #f5f3ff;
+  color: #6d28d9;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   ACCOUNT DETAILS
+========================================================= */
+
+.user-view-account-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-view-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f2f4;
+}
+
+.user-view-detail-row:last-child {
+  border-bottom: 0;
+}
+
+.user-view-detail-row span {
+  color: #9ca3af;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.user-view-detail-row strong {
+  color: #374151;
+  font-size: 10px;
+  text-align: right;
+  max-width: 65%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.user-view-no-data {
+  min-height: 90px;
+  border: 1px dashed #e5e7eb;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.user-view-no-data svg {
+  color: #c4c8cf;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.user-view-loading {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: #6b7280;
+}
+
+.user-view-loading-spinner {
+  margin-bottom: 12px;
+}
+
+.user-view-loading h6 {
+  margin: 0 0 4px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.user-view-loading p {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* =========================================================
+   EMPTY CARD
+========================================================= */
+
+.user-view-empty-card {
+  max-width: 450px;
+  margin: 80px auto;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+}
+
+.user-view-empty-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.user-view-empty-card h4 {
+  color: #374151;
+  font-size: 17px;
+}
+
+.user-view-empty-card p {
+  color: #9ca3af;
+  font-size: 12px;
+  margin-bottom: 18px;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 991px) {
+
+  .user-view-account-summary {
+    justify-content: flex-start;
+    margin-top: 20px;
+  }
+
+}
+
+@media (max-width: 767px) {
+
+  .user-view-page {
+    padding: 12px;
+  }
+
+  .user-view-profile-card .card-body {
+    padding: 18px;
+  }
+
+  .user-view-profile {
+    align-items: flex-start;
+  }
+
+  .user-view-avatar {
+    width: 65px;
+    height: 65px;
+    border-radius: 15px;
+    font-size: 22px;
+  }
+
+  .user-view-avatar img {
+    border-radius: 15px;
+  }
+
+  .user-view-name-row h2 {
+    font-size: 19px;
+  }
+
+  .user-view-account-summary {
+    gap: 20px;
+  }
+
+  .user-view-card .card-body {
+    padding: 16px;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .user-view-topbar {
+    align-items: flex-start;
+  }
+
+  .user-view-back-btn span {
+    display: none;
+  }
+
+  .user-view-edit-btn {
+    padding: 8px 11px !important;
+  }
+
+  .user-view-profile {
+    flex-direction: column;
+  }
+
+  .user-view-account-summary {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .user-view-badges {
+    gap: 5px;
+  }
+
+  .user-view-role-badge,
+  .user-view-status-badge,
+  .user-view-approval-badge {
+    font-size: 9px;
+    padding: 4px 7px;
+  }
+
+  .user-view-info-item {
+    align-items: flex-start;
+  }
+
+}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+
 import {
   Table,
   Button,
@@ -11,166 +12,390 @@ import {
   Card,
   CardBody,
   CardTitle,
+  Input,
 } from "reactstrap";
+
 import defaultImage from "../../../assets/images/default_images/images.jpg";
-import { useAuthcontext } from "../../../contexts/Authcontext";
 
 const CourseList = () => {
   const [courses, setCourses] = useState([]);
-  const { authUser } = useAuthcontext();
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
-
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await axios.get("/api/courses");
-        console.log(response.data)
-        setCourses(response.data);
-      } catch (error) {
-        console.error("Error fetching courses:", error);
-        const errorMessage =
-          error.response?.data?.message ||
-          "Error fetching courses. Please try again.";
-        toast.error(errorMessage);
-      }
-    };
-    fetchCourses();
-  }, []);
-
-  const handleDelete = async (courseId) => {
+  // --------------------------------------------------
+  // Fetch Courses
+  // --------------------------------------------------
+  const fetchCourses = async () => {
     try {
-      await axios.delete(`/api/courses/${courseId}`);
-      setCourses(courses.filter((course) => course._id !== courseId));
-      toast.success("Course deleted successfully!");
+      setLoading(true);
+
+      const response = await axios.get("/api/courses");
+
+      setCourses(response.data || []);
     } catch (error) {
-      console.error("Error deleting course:", error);
-      const errorMessage =
+      console.error("Error fetching courses:", error);
+
+      toast.error(
         error.response?.data?.message ||
-        "Error deleting course. Please try again.";
-      toast.error(errorMessage);
+          "Unable to fetch courses. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
+  // --------------------------------------------------
+  // Delete Course
+  // --------------------------------------------------
+  const handleDelete = async (courseId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this course?"
+    );
 
+    if (!confirmDelete) return;
 
-  function isImageValid(url) {
     try {
-      const parsed = new URL(url);
-      const isHttp =
-        parsed.protocol === "http:" || parsed.protocol === "https:";
-      const imagePattern = /\.(jpg|jpeg|png|gif|bmp|webp)(\?.*)?$/i;
-      return (
-        isHttp &&
-        (imagePattern.test(parsed.pathname) ||
-          parsed.hostname.includes("gstatic.com"))
-      );
-    } catch (e) {
-      return false;
-    }
-  }
+      await axios.delete(`/api/courses/${courseId}`);
 
-  const filteredCourses = courses.filter((course) =>
-    course.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      // Remove deleted course from state
+      setCourses((previousCourses) =>
+        previousCourses.filter((course) => course._id !== courseId)
+      );
+
+      toast.success("Course deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting course:", error);
+
+      toast.error(
+        error.response?.data?.message ||
+          "Unable to delete course. Please try again."
+      );
+    }
+  };
+
+  // --------------------------------------------------
+  // Check whether image URL is valid
+  // --------------------------------------------------
+  const getCourseImage = (imageUrl) => {
+    if (!imageUrl) {
+      return defaultImage;
+    }
+
+    try {
+      const url = new URL(imageUrl);
+
+      const isHttp =
+        url.protocol === "http:" || url.protocol === "https:";
+
+      const imageExtension =
+        /\.(jpg|jpeg|png|gif|bmp|webp)$/i;
+
+      const isImage =
+        imageExtension.test(url.pathname) ||
+        url.hostname.includes("gstatic.com");
+
+      return isHttp && isImage ? imageUrl : defaultImage;
+    } catch {
+      return defaultImage;
+    }
+  };
+
+  // --------------------------------------------------
+  // Fetch courses when component loads
+  // --------------------------------------------------
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  // --------------------------------------------------
+  // Search Courses
+  // --------------------------------------------------
+  const filteredCourses = courses.filter((course) => {
+    const courseName = course?.name || "";
+
+    return courseName
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+  });
 
   return (
-    <Container className="mt-2 container-fluid p-0">
+    <Container fluid className="px-2 px-md-3 mt-2">
       <Row>
         <Col xs="12">
-          <Card className="mx-0">
-            <CardBody>
-              <div className="d-lg-flex d-md-flex d-block flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center mb-3 flex-wrap gap-2">
-                <CardTitle tag="h5" className="mb-2 mb-md-0">
-                  Courses
-                </CardTitle>
-                <div className="d-flex flex-column flex-sm-row gap-2 w-100 w-md-auto">
-                  <input
+          <Card className="border-0 shadow-sm rounded-4">
+            <CardBody className="p-3 p-md-4">
+
+              {/* ----------------------------------------
+                  Header
+              ----------------------------------------- */}
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+
+                <div>
+                  <CardTitle
+                    tag="h4"
+                    className="mb-1 fw-bold"
+                  >
+                    Courses
+                  </CardTitle>
+
+                  <p className="text-muted mb-0 small">
+                    Manage and view all available courses
+                  </p>
+                </div>
+
+                <div className="d-flex flex-column flex-sm-row gap-2">
+
+                  {/* Search */}
+                  <Input
                     type="text"
                     placeholder="Search courses..."
-                    className="form-control w-100"
-                    style={{ maxWidth: "300px", width: "100%" }}
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) =>
+                      setSearchTerm(e.target.value)
+                    }
+                    className="course-search"
                   />
-                  <Link to="/instructor/create-course" className="">
-                    <Button color="primary" className="w-100 w-sm-auto">Add New</Button>
+
+                  {/* Add Course */}
+                  <Link
+                    to="/instructor/create-course"
+                    className="text-decoration-none"
+                  >
+                    <Button
+                      color="primary"
+                      className="w-100 btn-gradient"
+                    >
+                      <i className="bi bi-plus-lg me-1"></i>
+                      Add New
+                    </Button>
                   </Link>
+
                 </div>
               </div>
 
-              {courses.length > 0 ? (
-                <div className="table-responsive">
-                  <Table borderless className="mb-0">
-                    <thead className="approval-table">
-                      <tr>
-                        <th className="text-nowrap">Image</th>
-                        <th className="text-nowrap">Name</th>
-                        <th className="text-nowrap">JoinCode</th>
-                        <th className="text-nowrap">Course Type</th>
-                        <th className="text-nowrap">Duration</th>
-                        <th className="text-nowrap">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredCourses.map((course) => (
-                        <tr key={course._id}>
-                          <td className="text-nowrap">
-                            <img
-                              src={
-                                isImageValid(course.imageUrl)
-                                  ? course.imageUrl
-                                  : defaultImage
-                              }
-                              alt="Course Preview"
-                              style={{
-                                width: "60px",
-                                height: "auto",
-                                maxHeight: "60px",
-                                objectFit: "contain",
-                                backgroundColor: "#ededed",
-                                padding: "5px",
-                                borderRadius: "5px",
-                              }}
-                            />
-                          </td>
-                          <td className="text-nowrap text-capitalize">
-                            {course.name}
-                          </td>
-                          <td className="text-wrap">{course?.join_code}</td>
-                          <td className="text-nowrap text-capitalize">
-                            {course.course_type}
-                          </td>
-                          <td className="text-nowrap">
-                            {course.duration}
-                          </td>
-                          <td className="text-nowrap">
-                            <Link to={`/instructor/edit-course/${course._id}`}>
-                              <Button
-                                color="warning"
-                                className="me-2 mb-1 mb-md-0"
-                                size="sm"
-                              >
-                                <i className="bi bi-pen-fill"></i>
-                              </Button>
-                            </Link>
-                            <Button
-                              color="danger"
-                              onClick={() => handleDelete(course._id)}
-                              size="sm"
-                            >
-                              <i className="bi bi-trash-fill"></i>
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
+              {/* ----------------------------------------
+                  Loading
+              ----------------------------------------- */}
+              {loading ? (
+                <div className="text-center py-5">
+                  <div
+                    className="spinner-border text-primary"
+                    role="status"
+                  >
+                    <span className="visually-hidden">
+                      Loading...
+                    </span>
+                  </div>
+
+                  <p className="text-muted mt-3 mb-0">
+                    Loading courses...
+                  </p>
+                </div>
+              ) : courses.length === 0 ? (
+                /* ----------------------------------------
+                   No Courses
+                ----------------------------------------- */
+                <div className="text-center py-5">
+
+                  <div className="mb-3">
+                    <i
+                      className="bi bi-book fs-1 text-muted"
+                    ></i>
+                  </div>
+
+                  <h5>No courses available</h5>
+
+                  <p className="text-muted mb-3">
+                    Create your first course to get started.
+                  </p>
+
+                  <Link to="/instructor/create-course">
+                    <Button color="primary" className="btn-gradient">
+                      <i className="bi bi-plus-lg me-1"></i>
+                      Add Course
+                    </Button>
+                  </Link>
+
+                </div>
+              ) : filteredCourses.length === 0 ? (
+                /* ----------------------------------------
+                   No Search Results
+                ----------------------------------------- */
+                <div className="text-center py-5">
+
+                  <i
+                    className="bi bi-search fs-1 text-muted"
+                  ></i>
+
+                  <h5 className="mt-3">
+                    No courses found
+                  </h5>
+
+                  <p className="text-muted mb-0">
+                    Try searching with a different course name.
+                  </p>
+
                 </div>
               ) : (
-                <p className="text-center">No courses available</p>
+                /* ----------------------------------------
+                   Course Table
+                ----------------------------------------- */
+
+                <div className="course-table-wrapper">
+
+                  <Table
+                    responsive
+                    hover
+                    borderless
+                    className="align-middle mb-0"
+                  >
+
+                    {/* Table Header */}
+                    <thead className="table-light">
+                      <tr>
+                        <th className="text-nowrap">
+                          Image
+                        </th>
+
+                        <th className="text-nowrap">
+                          Course Name
+                        </th>
+
+                        <th className="text-nowrap">
+                          Join Code
+                        </th>
+
+                        <th className="text-nowrap">
+                          Course Type
+                        </th>
+
+                        <th className="text-nowrap">
+                          Duration
+                        </th>
+
+                        <th className="text-nowrap text-center">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+
+                    {/* Table Body */}
+                    <tbody>
+                      {filteredCourses.map((course) => (
+
+                        <tr key={course._id}>
+
+                          {/* Image */}
+                          <td>
+                            <img
+                              src={getCourseImage(
+                                course.imageUrl
+                              )}
+                              alt={course.name || "Course"}
+                              className="course-image-list"
+                            />
+                          </td>
+
+                          {/* Course Name */}
+                          <td>
+                            <div className="course-name">
+                              {course.name || "Untitled Course"}
+                            </div>
+                          </td>
+
+                          {/* Join Code */}
+                          <td>
+                            <span className="join-code">
+                              {course.join_code || "-"}
+                            </span>
+                          </td>
+
+                          {/* Course Type */}
+                          <td>
+                            <span className="text-capitalize">
+                              {course.course_type || "-"}
+                            </span>
+                          </td>
+
+                          {/* Duration */}
+                          <td>
+                            {course.duration || "-"}
+                          </td>
+
+                          {/* Actions */}
+                          <td>
+                            <div className="d-flex justify-content-center gap-2">
+
+                              {/* Edit */}
+                              <Link
+                                to={`/instructor/edit-course/${course._id}`}
+                              >
+                                <Button
+                                  color="warning"
+                                  size="sm"
+                                  className="action-button"
+                                  title="Edit Course"
+                                >
+                                  <i className="bi bi-pencil-fill"></i>
+                                </Button>
+                              </Link>
+
+                              {/* Delete */}
+                              <Button
+                                color="danger"
+                                size="sm"
+                                className="action-button"
+                                title="Delete Course"
+                                onClick={() =>
+                                  handleDelete(course._id)
+                                }
+                              >
+                                <i className="bi bi-trash-fill"></i>
+                              </Button>
+
+                            </div>
+                          </td>
+
+                        </tr>
+
+                      ))}
+                    </tbody>
+
+                  </Table>
+
+                </div>
               )}
+
+              {/* ----------------------------------------
+                  Footer Information
+              ----------------------------------------- */}
+              {!loading && courses.length > 0 && (
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mt-3 pt-3 border-top">
+
+                  <small className="text-muted">
+                    Showing{" "}
+                    <strong>
+                      {filteredCourses.length}
+                    </strong>{" "}
+                    of{" "}
+                    <strong>{courses.length}</strong>{" "}
+                    courses
+                  </small>
+
+                  {searchTerm && (
+                    <Button
+                      color="link"
+                      size="sm"
+                      className="p-0 text-decoration-none"
+                      onClick={() => setSearchTerm("")}
+                    >
+                      Clear search
+                    </Button>
+                  )}
+
+                </div>
+              )}
+
             </CardBody>
           </Card>
         </Col>

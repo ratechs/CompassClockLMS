@@ -5,9 +5,8 @@ import { useAuthcontext } from '../../contexts/Authcontext';
 export const useGetTests = ({id}) => {
     const [loading, setLoading] = useState(false);
     const [tests, setTests] = useState([]);
-    const { AuthUser } = useAuthcontext();
-    console.log('AuthUser', id);
-
+    const { authUser } = useAuthcontext();
+    console.log('authUser', id);
     const fetchTest = async () => {
         console.log('Fetching test data...', id);
         

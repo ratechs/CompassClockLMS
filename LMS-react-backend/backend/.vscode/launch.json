@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // Node.js Debugging
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "skipFiles": ["<node_internals>/**"],
+            "program": "${workspaceFolder}/server.js",
+            "env": {
+                "NODE_ENV": "development"
+            }
+        },
+        // React Native Debugging
+        {
+            "name": "Debug React Native",
+            "type": "reactnative",
+            "request": "launch",
+            "platform": "ios",
+            "target": "simulator"
+        },
+        // Express API Debugging
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Express API",
+            "runtimeExecutable": "nodemon",
+            "program": "${workspaceFolder}/src/server.js",
+            "console": "integratedTerminal",
+            "restart": true,
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

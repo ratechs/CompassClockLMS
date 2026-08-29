@@ -6,14 +6,27 @@ $font-family-sans-serif: "Poppins", sans-serif;
 /*******************/
 // Theme Colors
 /********************/
-$primary: #85db51;
-$info: #85db51;
+$primary: #000000;
+$info: #000000;
 $danger: #FFB0B0;
 $success: #39c449;
 $warning: #F6E96B;
 $dark: #343a40;
 $light: #eaf2fb;
 $secondary: #35363b;
+$primary-login: #000000;
+$primary-login-dark: #000000b4;
+$primary-login-light: #a29bfe;
+$primary-login-gradient: linear-gradient(135deg, #000000 0%, #ffffffa0 100%);
+$secondary-login: #00cec9;
+$accent-login: #fd79a8;
+$dark-login: #1a1a2e;
+$glass-bg-login: rgba(255, 255, 255, 0.08);
+$glass-border-login: rgba(255, 255, 255, 0.607);
+$glass-shadow-login: 0 25px 80px rgba(0, 0, 0, 0.2);
+$shadow-hover-login: 0 30px 100px rgba(108, 92, 231, 0.3);
+$border-radius-login: 24px;
+$transition-login: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
 $theme-colors: (
   "primary": $primary,
@@ -54,6 +67,7 @@ $font-weight-bold: 500 !default;
 $body-bg: $gray-200 !default;
 $body-color: $gray-900 !default;
 $gradient: linear-gradient(-90deg, rgba($white, 0.5), rgba($white, 0)) !default;
+$theme-gradient: linear-gradient(135deg, #2559a7, #ff4aa5) !default;
 
 /*******************/
 // Theme common variable

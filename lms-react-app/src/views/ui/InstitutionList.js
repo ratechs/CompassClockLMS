@@ -157,12 +157,23 @@ const InstitutionTable = () => {
                                                     <td>
                                                         {inst.location.city}, {inst.location.country}
                                                     </td>
-                                                    <td>
+                                                    <td className="d-flex flex-wrap">
+                                                        <Link to={authUser.user.role === 'coordinator' ? `/coordinator/institutions/edit/${inst._id || inst.id}` : `/instructor/institutions/${inst._id || inst.id}/students`}>
+                                                            <Button
+                                                                color="dark"
+                                                                size="sm"
+                                                                className="m-1"
+                                                                title="Students List"
+                                                            >
+                                                               SL
+                                                            </Button>
+                                                        </Link>
+                                                        
                                                         <Link to={authUser.user.role === 'coordinator' ? `/coordinator/institutions/edit/${inst._id || inst.id}` : `/instructor/institutions/edit/${inst._id || inst.id}`}>
                                                             <Button
                                                                 color="warning"
                                                                 size="sm"
-                                                                className="me-2"
+                                                                className="m-1"
                                                                 title="Edit"
                                                             >
                                                                 <i className="bi bi-pencil-fill"></i>
@@ -171,7 +182,7 @@ const InstitutionTable = () => {
                                                         {
                                                             authUser.user.role !== 'coordinator' && (
 
-                                                                <Button color="danger" size="sm" title="Delete" onClick={() => deleteData(inst._id || inst.id)}>
+                                                                <Button color="danger" size="sm" title="Delete" onClick={() => deleteData(inst._id || inst.id)} className="m-1">
                                                                     <i className="bi bi-trash-fill"></i>
                                                                 </Button>
                                                             )

@@ -20,7 +20,7 @@ router.put('/:id', updateCourse);
 router.put('/update-course/:courseId', updateFullCourse);
 
 // PUT create a full course
-router.put('/create-course/:courseId', createFullCourse);
+router.post('/create-course', createFullCourse);
 
 // DELETE a course
 router.delete('/:id', deleteCourse);

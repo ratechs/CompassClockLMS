@@ -74,7 +74,7 @@ const Starter = () => {
           <Card className="shadow border-0 rounded-4 p-3 position-relative overflow-hidden stat-card">
             <div className="d-flex align-items-center gap-3">
               <div className="icon-circle bg-light-primary rounded-circle d-flex justify-content-center align-items-center" style={{ width: 60, height: 60 }}>
-                <RiBookOpenFill size={35} color="#85db51" />
+                <RiBookOpenFill size={35} color="#000000" />
               </div>
               <div>
                 <CardTitle tag="h6" className="fw-semibold text-secondary text-uppercase mb-1">

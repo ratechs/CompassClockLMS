@@ -10,16 +10,11 @@ import { fileURLToPath } from 'url';
 // === ROUTES ===
 import authRoutes from './routes/userRoutes.js';
 import MaterialRoutes from './routes/materialsRoutes.js';
-import GroupRoutes from './routes/groupsRoutes.js';
 import CoursesRoutes from './routes/coursesRoutes.js';
 import SubjectRoutes from './routes/subjectsRoutes.js';
 import CreateFullCourse from './routes/createFullCourse.js';
 import UpdateFullCourse from './routes/updateFullCourse.js';
-import TestRoutes from './routes/testRoutes.js';
-import ResultRoutes from './routes/testSubmissionRoutes.js';
-import LeaderboardRoutes from './routes/leaderBoardRoutes.js';
-import InstitutionRoutes from './routes/institutionRoutes.js';
-
+import StudentRoutes from './routes/studentRoutes.js'
 const app = express();
 
 // === MIDDLEWARE ===
@@ -32,14 +27,10 @@ app.use(cors());
 
 // === API ROUTES ===
 app.use('/api/users', authRoutes);
-app.use('/api/groups', GroupRoutes);
 app.use('/api/courses', CoursesRoutes);
 app.use('/api/subjects', SubjectRoutes);
 app.use('/api/materials', MaterialRoutes);
-app.use('/api/tests', TestRoutes);
-app.use('/api/result', ResultRoutes);
-app.use('/api/leaderboard', LeaderboardRoutes);
-app.use('/api/institution', InstitutionRoutes);
+app.use('/api/students/', StudentRoutes);
 
 // === SERVE REACT FRONTEND BUILD ===
 const __filename = fileURLToPath(import.meta.url);
@@ -73,8 +64,9 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 8001;
 
 mangoDb().then(() => {
-  app.listen(PORT, () => {
-    console.log(chalk.green(`✅ Server is running on http://localhost:${PORT}`));
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(chalk.green(`✅ Server is running on http://0.0.0.0:${PORT}`));
+    console.log(chalk.blue(`   Access from browser: http://13.62.103.169:${PORT}`));
   });
 }).catch(err => {
   console.error(chalk.red('❌ Failed to connect to MongoDB:', err.message));

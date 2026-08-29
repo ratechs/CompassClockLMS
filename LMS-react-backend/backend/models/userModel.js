@@ -2,6 +2,10 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
+    fullname: {
+      type: String,
+      required: true,
+    },
     username: {
       type: String,
       required: true,
@@ -29,11 +33,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: null, // Initial default is null, logic handled below
     },
-    groups: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Group',
-      default: []
-    }],
     profilePicture: {
       type: String,
       default: null,

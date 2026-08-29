@@ -27,13 +27,6 @@ export const getAllCourses = async (req, res) => {
             select: 'name', // keep only needed fields
           }
         }
-      })
-      .populate({
-        path: 'course_institution',
-        populate: {
-          path: 'institution',
-          model: 'Institution'
-        }
       });
 
     res.status(200).json(courses);
@@ -132,12 +125,6 @@ export const getCourseDetails = async (req, res) => {
       populate: {
         path: 'user',
         model: 'User'
-      }
-    }).populate({
-      path: 'course_institution',
-      populate: {
-        path: 'institution',
-        model: 'Institution'
       }
     });
     if (!course) {

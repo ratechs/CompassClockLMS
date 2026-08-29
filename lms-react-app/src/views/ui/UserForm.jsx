@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const initialFormState = {
+  fullname:"",
   username: "",
   email: "",
   password: "",
@@ -119,6 +120,11 @@ const UserForm = ({ onSuccess }) => {
       <h3>{isEditMode ? "Edit User" : "Create New User"}</h3>
       <div className="form-grid">
 
+        <div className="form-group">
+          <label htmlFor="fullname">Full Name</label>
+          <input id="fullname" name="fullname" value={formData.fullname} onChange={handleChange} />
+        </div>
+        
         <div className="form-group">
           <label htmlFor="username">Username</label>
           <input id="username" name="username" value={formData.username} onChange={handleChange} />

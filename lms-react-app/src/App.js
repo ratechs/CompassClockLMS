@@ -15,6 +15,7 @@ import { useAuthcontext } from './contexts/Authcontext';
 import CourseList from './components/students-view/course/CourseList';
 import CourseDetails from './components/students-view/course/course-details';
 import StudentCourseList from './components/students-view/course/StudentCourseList';
+import StudentProfile from './components/students-view/StudentProfile';
 import CourseForm from './components/instructor/course/CourseForm';
 import TeacherForm from './components/instructor/course/TeacherCourseForm';
 import InstructorCourseList from './components/instructor/course/CourseList';
@@ -25,9 +26,12 @@ import ExploreDetails from './components/students-view/course/ExploreDetails';
 import UnitsPage from './components/students-view/course/unitsPage';
 import MaterialPage from './components/students-view/course/materialPage';
 import TestOverview from './views/ui/Test';
+import PsychometricTestOverview from './views/ui/PsycometricTest';
+import PsychometricTestForm from './views/ui/PsychometricTestForm';
 import TeacherTestOverview from './views/ui/TeacherTest';
 import TestFormReact from './views/ui/TestForm';
 import UserList from './views/ui/UserList'
+import UserView from './views/ui/UserView'
 import StudentList from './views/ui/TeacherStudentList'
 import ApprovalList from './views/ui/ApprovalList';
 import UserForm from './views/ui/UserForm';
@@ -38,6 +42,8 @@ import TestEditForm from './views/ui/TestEditForm';
 import InstitutionTable from './views/ui/InstitutionList';
 import InstitutionForm from './views/ui/institutionForm';
 import TeacherApprovals from './views/ui/TeacherApprovals';
+import InsStudentList from './views/ui/StudentList';
+import StudentUpload from './views/ui/excel/upload_page';
 
 
 
@@ -65,14 +71,20 @@ const App = () => {
           <Route path="/instructor/create-course" element={<CourseForm />} />
           <Route path="/instructor/edit-course/:courseId" element={<CourseForm />} />
           <Route path="/instructor/test/" element={<TestOverview />} />
+          <Route path="/instructor/psychometric-test/" element={<PsychometricTestOverview />} />
+          <Route path="/instructor/psychometric-test/new" element={<PsychometricTestForm />} />
+          <Route path="/instructor/psychometric-test/:id" element={<PsychometricTestForm />} />
           <Route path="/instructor/test/new" element={<TestFormReact />} />
           <Route path="/instructor/test/:id" element={<TestFormReact />} />
           <Route path="/instructor/users" element={<UserList />} />
           <Route path="/instructor/users/edit/:id" element={<UserForm />} />
+          <Route path="/instructor/users/view/:id" element={<UserView />} />
           <Route path="/instructor/approvals" element={<ApprovalList />} />
           <Route path="/instructor/institution" element={<InstitutionTable />} />
           <Route path="/instructor/institutions/create" element={<InstitutionForm />} />
           <Route path="/instructor/institutions/edit/:id" element={<InstitutionForm />} />
+          <Route path="/instructor/institutions/:id/students" element={<InsStudentList />} />
+          <Route path="/instructor/institutions/:id/students/upload" element={<StudentUpload />} />
           <Route path="/instructor/teacher-approvals" element={<TeacherApprovals />} />
         </Route>
 
@@ -89,7 +101,7 @@ const App = () => {
           <Route path="/coordinator/institution" element={<InstitutionTable />} />
           <Route path="/coordinator/institutions/create" element={<InstitutionForm />} />
           <Route path="/coordinator/institutions/edit/:id" element={<InstitutionForm />} />
-                    <Route path="/coordinator/teacher-approvals" element={<TeacherApprovals />} />
+          <Route path="/coordinator/teacher-approvals" element={<TeacherApprovals />} />
 
         </Route>
 
@@ -127,6 +139,7 @@ const App = () => {
         >
           <Route path="/" element={<Navigate to="/home" />} />
           <Route path="/courses" element={<CourseList />} />
+          <Route path="/profile" element={<StudentProfile />} />
           <Route path="/student-courses" element={<StudentCourseList />} />
           <Route path="/course/details/:id" element={<CourseDetails />} />
           <Route path="/course/explore-details/:id" element={<ExploreDetails />} />

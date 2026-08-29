@@ -7,7 +7,7 @@ export const useLogin = () => {
     const [loading, setLoading] = useState(false);
     const { setAuthUser } = useAuthcontext();
 
-    const login = async (usernameOrEmail, password) => {
+    const login = async (usernameOrEmail, password, lastLogin) => {
         setLoading(true);
         try {
             const res = await fetch('/api/users/sign_in', {
@@ -16,7 +16,7 @@ export const useLogin = () => {
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({ usernameOrEmail, password }),
+                body: JSON.stringify({ usernameOrEmail, password, lastLogin }),
             });
 
             if (!res.ok) {

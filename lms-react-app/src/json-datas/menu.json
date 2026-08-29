@@ -1,39 +1,17 @@
 [
-    {
-      "title": "Dashboard",
-      "href": "/instructor/starter",
-      "icon": "bi bi-speedometer2 fs-4"
-    },
-    {
-      "title": "Courses",
-      "href": "/instructor/courses",
-      "icon": "bi bi-book-half fs-4"
-    },
-    {
-      "title": "Tests",
-      "href": "/instructor/test",
-      "icon": "bi bi-pen-fill fs-4"
-    },
-    {
-      "title": "Institutions",
-      "href": "/instructor/institution",
-      "icon": "bi bi-buildings-fill fs-4"
-    },
-    {
-      "title": "Teacher Approvals",
-      "href": "/instructor/teacher-approvals",
-      "icon": "bi bi-ui-checks fs-4"
-    },
-    {
-      "title": "Users",
-      "href": "/instructor/users",
-      "icon": "bi bi-people-fill fs-4"
-    },
-    {
-      "title": "User Approvals",
-      "href": "/instructor/approvals",
-      "icon": "bi bi-ui-checks-grid fs-4"
-    }
-    
-  ] 
-  
+  {
+    "title": "Dashboard",
+    "href": "/instructor/starter",
+    "icon": "bi bi-speedometer2 fs-4"
+  },
+  {
+    "title": "Courses",
+    "href": "/instructor/courses",
+    "icon": "bi bi-journal-bookmark-fill fs-4"
+  },
+  {
+    "title": "Students",
+    "href": "/instructor/users",
+    "icon": "bi bi-mortarboard-fill fs-4"
+  }
+]

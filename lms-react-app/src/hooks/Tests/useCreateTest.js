@@ -1,68 +1,70 @@
-// hooks/Tests/useCreateTests.js
+// hooks/Tests/useCreateTest.js
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { useAuthcontext } from '../../contexts/Authcontext';
+import { useNavigate } from 'react-router-dom';
 
 export const useCreateTests = () => {
-  const [loading, setLoading] = useState(false);
-  const { AuthUser } = useAuthcontext();
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-  const createTest = async (testData) => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/tests/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ data: testData }), // FIXED: stringify body
-      });
+    const createTest = async (testData) => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/tests/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(testData)
+            });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to create test");
-      }
+            const data = await res.json();
 
-      const result = await res.json();
-      toast.success("Test created successfully!");
-      return result;
-    } catch (error) {
-      console.error(error);
-      toast.error(error.message || "Something went wrong!");
-      throw error; // important if you want to catch errors outside
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (!res.ok) {
+                throw new Error(data.message || 'Failed to create test');
+            }
 
-  return { createTest, loading };
+            toast.success('Test created successfully!');
+            navigate('/instructor/tests');
+            return data;
+        } catch (error) {
+            console.error('Error creating test:', error);
+            toast.error(error.message || 'Failed to create test');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { createTest, loading };
 };
 
-export const updateTest = async (testId, updatedData) => {
+export const updateTest = async (id, testData) => {
+    try {
+        // Remove created_by from update payload
+        const { created_by, ...updatePayload } = testData;
 
-  try {
-    const res = await fetch(`/api/tests/${testId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(updatedData),
-    });
+        const res = await fetch(`/api/tests/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(updatePayload)
+        });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || "Failed to update test");
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.message || 'Failed to update test');
+        }
+
+        toast.success('Test updated successfully!');
+        return data;
+    } catch (error) {
+        console.error('Error updating test:', error);
+        toast.error(error.message || 'Failed to update test');
+        throw error;
     }
-
-    const result = await res.json();
-    toast.success("Test updated successfully!");
-
-    return result;
-  } catch (error) {
-    console.error(error);
-    toast.error(error.message || "Something went wrong!");
-    throw error;
-  }
 };

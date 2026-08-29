@@ -4,7 +4,7 @@ import { MongoClient } from "mongodb";
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 const uri =
-  "mongodb+srv://admin:beternalAdmin@beternal.vnmk00p.mongodb.net/?appName=Beternal";
+  "mongodb+srv://radigitaltechnologies_db_user:1mtEc33432ihYQfJ@lms.fifpcn0.mongodb.net/?appName=LMS";
 
 async function run() {
   try {

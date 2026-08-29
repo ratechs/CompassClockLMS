@@ -134,7 +134,7 @@ const CourseForm = () => {
         const getRandomLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
         const uniqueSuffix = getRandomLetter() + getRandomLetter();
         const generatedJoinCode = `NCL1-${uniqueSuffix}`;
-        await axios.post("http://localhost:5000/api/courses/create-course", {
+        await axios.post("/api/courses/create-course", {
           ...courseData,
           join_code: generatedJoinCode,
         });
