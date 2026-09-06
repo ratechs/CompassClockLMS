@@ -128,13 +128,3 @@ mangoDb()
   .catch(err => {
     console.error('MongoDB Error:', err);
   });
-  .catch(err => {
-
-    console.error(
-      chalk.red(
-        '❌ Failed to connect to MongoDB:',
-        err.message
-      )
-    );
-
-  });
