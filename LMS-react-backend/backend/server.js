@@ -19,7 +19,9 @@ import StudentRoutes from './routes/studentRoutes.js';
 
 const app = express();
 
-// === MIDDLEWARE ===
+// ======================================================
+// MIDDLEWARE
+// ======================================================
 
 app.use(express.json({
   limit: '100mb'
@@ -34,13 +36,15 @@ app.use(cookieParser());
 
 app.use(cors({
   origin: [
-    'https://lms.saandronе.com',
+    'https://lms.saandrone.com',
     'http://localhost:5173'
   ],
   credentials: true
 }));
 
-// === API ROUTES ===
+// ======================================================
+// API ROUTES
+// ======================================================
 
 app.use('/api/users', authRoutes);
 app.use('/api/courses', CoursesRoutes);
@@ -48,7 +52,9 @@ app.use('/api/subjects', SubjectRoutes);
 app.use('/api/materials', MaterialRoutes);
 app.use('/api/students', StudentRoutes);
 
-// === REACT FRONTEND ===
+// ======================================================
+// REACT FRONTEND
+// ======================================================
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,7 +79,23 @@ if (!fs.existsSync(clientBuildPath)) {
 
 app.use(express.static(clientBuildPath));
 
-// === FRONTEND FALLBACK ===
+// ======================================================
+// NODE.JS CONNECTION TEST
+// ======================================================
+
+app.get('/node-test', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Node.js application is receiving requests',
+    domain: 'lms.saandrone.com',
+    environment: process.env.NODE_ENV || 'production',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ======================================================
+// FRONTEND FALLBACK
+// ======================================================
 
 app.use((req, res) => {
 
@@ -89,7 +111,9 @@ app.use((req, res) => {
   });
 });
 
-// === START SERVER ===
+// ======================================================
+// START SERVER
+// ======================================================
 
 const PORT = process.env.PORT || 8001;
 
@@ -102,13 +126,20 @@ mangoDb()
         chalk.green(`✅ Server running on port ${PORT}`)
       );
 
+      console.log(
+        chalk.blue(`🌐 Application: https://lms.saandrone.com`)
+      );
+
     });
 
   })
   .catch(err => {
 
     console.error(
-      chalk.red('❌ Failed to connect to MongoDB:', err.message)
+      chalk.red(
+        '❌ Failed to connect to MongoDB:',
+        err.message
+      )
     );
 
   });
