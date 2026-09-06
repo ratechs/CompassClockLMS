@@ -119,20 +119,15 @@ const PORT = process.env.PORT || 8001;
 
 mangoDb()
   .then(() => {
-
-    app.listen(PORT, '0.0.0.0', () => {
-
-      console.log(
-        chalk.green(`✅ Server running on port ${PORT}`)
-      );
-
-      console.log(
-        chalk.blue(`🌐 Application: https://lms.saandrone.com`)
-      );
-
-    });
-
+    if (!process.env.VERCEL) {
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    }
   })
+  .catch(err => {
+    console.error('MongoDB Error:', err);
+  });
   .catch(err => {
 
     console.error(
