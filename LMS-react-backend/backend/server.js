@@ -23,15 +23,8 @@ const app = express();
 // MIDDLEWARE
 // ======================================================
 
-app.use(express.json({
-  limit: '100mb'
-}));
-
-app.use(express.urlencoded({
-  limit: '100mb',
-  extended: true
-}));
-
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
@@ -53,34 +46,27 @@ app.use('/api/materials', MaterialRoutes);
 app.use('/api/students', StudentRoutes);
 
 // ======================================================
-// REACT FRONTEND
+// REACT FRONTEND PATH SETUP
 // ======================================================
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const clientBuildPath = path.resolve(
-  __dirname,
-  '../../lms-react-app/build'
-);
+// Adjust path relative to backend directory structure
+const clientBuildPath = path.resolve(__dirname, '../frontend/build');
 
 console.log('Current directory:', __dirname);
 console.log('Build path:', clientBuildPath);
 
 if (!fs.existsSync(clientBuildPath)) {
-  console.error(
-    chalk.red('❌ React build directory not found')
-  );
+  console.error(chalk.red('❌ React build directory not found at:', clientBuildPath));
 } else {
-  console.log(
-    chalk.green('✅ React build directory found')
-  );
+  console.log(chalk.green('✅ React build directory found'));
+  app.use(express.static(clientBuildPath));
 }
 
-app.use(express.static(clientBuildPath));
-
 // ======================================================
-// NODE.JS CONNECTION TEST
+// TEST ROUTE
 // ======================================================
 
 app.get('/node-test', (req, res) => {
@@ -94,15 +80,16 @@ app.get('/node-test', (req, res) => {
 });
 
 // ======================================================
-// FRONTEND FALLBACK
+// FRONTEND FALLBACK ROUTE
 // ======================================================
 
 app.use((req, res) => {
-
   if (!req.path.startsWith('/api')) {
-    return res.sendFile(
-      path.join(clientBuildPath, 'index.html')
-    );
+    const indexPath = path.join(clientBuildPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+    return res.status(404).send('React build index.html not found');
   }
 
   return res.status(404).json({
@@ -112,34 +99,18 @@ app.use((req, res) => {
 });
 
 // ======================================================
-// START SERVER
+// START SERVER & DATABASE (NON-BLOCKING)
 // ======================================================
 
 const PORT = process.env.PORT || 8001;
 
-mangoDb()
-  .then(() => {
+// 1. Start Server Immediately (Required for Passenger)
+app.listen(PORT, () => {
+  console.log(chalk.green(`✅ Server running on port ${PORT}`));
+  console.log(chalk.blue(`🌐 Application: https://lms.saandrone.com`));
+});
 
-    app.listen(PORT, '0.0.0.0', () => {
-
-      console.log(
-        chalk.green(`✅ Server running on port ${PORT}`)
-      );
-
-      console.log(
-        chalk.blue(`🌐 Application: https://lms.saandrone.com`)
-      );
-
-    });
-
-  })
-  .catch(err => {
-
-    console.error(
-      chalk.red(
-        '❌ Failed to connect to MongoDB:',
-        err.message
-      )
-    );
-
-  });
+// 2. Connect Database Asynchronously without blocking port listener
+mangoDb().catch(err => {
+  console.error(chalk.red('❌ Database connection error on startup:', err.message));
+});
