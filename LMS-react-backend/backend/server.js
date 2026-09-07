@@ -53,7 +53,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Adjust path relative to backend directory structure
-const clientBuildPath = path.resolve(__dirname, '../frontend/build');
+const clientBuildPath = path.resolve(__dirname, '../../lms-react-app/build');
 
 console.log('Current directory:', __dirname);
 console.log('Build path:', clientBuildPath);
