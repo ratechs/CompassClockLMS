@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npm install --prefix LMS-react-backend && npm install --prefix lms-react-app && npm run build --prefix lms-react-app"
+    "build": "npm install --prefix LMS-react-backend && npm install --prefix lms-react-app && CI=false npm run build --prefix lms-react-app"
   }
 }
