@@ -1,0 +1,9 @@
+{
+  "name": "compass-clock-lms",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm install --prefix LMS-react-backend && npm install --prefix lms-react-app && npm run build --prefix lms-react-app"
+  }
+}
