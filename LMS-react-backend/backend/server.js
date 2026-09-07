@@ -1,118 +1,167 @@
-import express from 'express';
-import 'dotenv/config';
-import mangoDb from './db/mangoos.js';
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
+import express from "express";
+import "dotenv/config";
+import mangoDb from "./db/mangoos.js";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 
-// === ROUTES ===
-import authRoutes from './routes/userRoutes.js';
-import MaterialRoutes from './routes/materialsRoutes.js';
-import CoursesRoutes from './routes/coursesRoutes.js';
-import SubjectRoutes from './routes/subjectsRoutes.js';
-import CreateFullCourse from './routes/createFullCourse.js';
-import UpdateFullCourse from './routes/updateFullCourse.js';
-import StudentRoutes from './routes/studentRoutes.js';
+// ======================================================
+// ROUTES
+// ======================================================
+
+import authRoutes from "./routes/userRoutes.js";
+import MaterialRoutes from "./routes/materialsRoutes.js";
+import CoursesRoutes from "./routes/coursesRoutes.js";
+import SubjectRoutes from "./routes/subjectsRoutes.js";
+import CreateFullCourse from "./routes/createFullCourse.js";
+import UpdateFullCourse from "./routes/updateFullCourse.js";
+import StudentRoutes from "./routes/studentRoutes.js";
+
+
+// ======================================================
+// EXPRESS APP
+// ======================================================
 
 const app = express();
+
+
+// ======================================================
+// BODY PARSER
+// ======================================================
+
+app.use(
+  express.json({
+    limit: "100mb",
+  })
+);
+
+app.use(
+  express.urlencoded({
+    limit: "100mb",
+    extended: true,
+  })
+);
+
+
+// ======================================================
+// COOKIE
+// ======================================================
+
+app.use(cookieParser());
+
+
+// ======================================================
+// CORS
+// ======================================================
+
+app.use(
+  cors({
+    origin: [
+      "https://lms.saandrone.com",
+      "https://compass-clock-lms.vercel.app",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  })
+);
+
+
+// ======================================================
+// MONGODB CONNECTION
+// ======================================================
 
 app.use(async (req, res, next) => {
   try {
     await mangoDb();
+
     next();
   } catch (error) {
-    console.error("MongoDB connection error:", error);
+    console.error("❌ MongoDB connection error:");
+    console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Database connection failed",
     });
   }
 });
 
-// ======================================================
-// MIDDLEWARE
-// ======================================================
-
-app.use(express.json({
-  limit: '100mb'
-}));
-
-app.use(express.urlencoded({
-  limit: '100mb',
-  extended: true
-}));
-
-app.use(cookieParser());
-
-app.use(cors({
-  origin: [
-    'https://lms.saandrone.com',
-    'http://localhost:3000',
-    'http://localhost:5000'
-  ],
-  credentials: true
-}));
 
 // ======================================================
 // API ROUTES
 // ======================================================
 
-app.use('/api/users', authRoutes);
-app.use('/api/courses', CoursesRoutes);
-app.use('/api/subjects', SubjectRoutes);
-app.use('/api/materials', MaterialRoutes);
-app.use('/api/students', StudentRoutes);
+app.use("/api/users", authRoutes);
 
-// If these are actually used in your project,
-// keep/add their routes here.
-//
-// app.use('/api/create-full-course', CreateFullCourse);
-// app.use('/api/update-full-course', UpdateFullCourse);
+app.use("/api/courses", CoursesRoutes);
+
+app.use("/api/subjects", SubjectRoutes);
+
+app.use("/api/materials", MaterialRoutes);
+
+app.use("/api/students", StudentRoutes);
+
 
 // ======================================================
-// NODE.JS CONNECTION TEST
+// FULL COURSE ROUTES
 // ======================================================
 
-app.get('/node-test', (req, res) => {
+// If these routes are actually used,
+// uncomment the correct paths.
+
+// app.use("/api/create-full-course", CreateFullCourse);
+// app.use("/api/update-full-course", UpdateFullCourse);
+
+
+// ======================================================
+// NODE + DATABASE TEST
+// ======================================================
+
+app.get("/api/node-test", async (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Node.js application is receiving requests',
-    environment: process.env.NODE_ENV || 'production',
-    timestamp: new Date().toISOString()
+    message: "Node.js API is working",
+    database: "connected",
+    environment: process.env.NODE_ENV || "production",
+    timestamp: new Date().toISOString(),
   });
 });
+
 
 // ======================================================
 // API 404
 // ======================================================
 
-app.use((req, res) => {
+app.use("/api", (req, res) => {
   res.status(404).json({
     success: false,
-    error: 'API route not found'
+    error: "API route not found",
+    path: req.originalUrl,
   });
 });
 
+
 // ======================================================
-// DATABASE + LOCAL SERVER
+// LOCAL DEVELOPMENT SERVER
 // ======================================================
 
-const PORT = process.env.PORT || 8001;
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 8001;
 
-mangoDb()
-  .then(() => {
-    if (!process.env.VERCEL) {
-      app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server running on port ${PORT}`);
+  mangoDb()
+    .then(() => {
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`🚀 Server running on port ${PORT}`);
       });
-    }
-  })
-  .catch(err => {
-    console.error('MongoDB Error:', err);
-  });
+    })
+    .catch((error) => {
+      console.error("❌ MongoDB Error:", error);
+    });
+}
+
 
 // ======================================================
-// EXPORT EXPRESS APP
+// EXPORT FOR VERCEL
 // ======================================================
 
 export default app;
