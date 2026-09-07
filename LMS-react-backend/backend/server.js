@@ -15,6 +15,20 @@ import StudentRoutes from './routes/studentRoutes.js';
 
 const app = express();
 
+app.use(async (req, res, next) => {
+  try {
+    await mangoDb();
+    next();
+  } catch (error) {
+    console.error("MongoDB connection error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+    });
+  }
+});
+
 // ======================================================
 // MIDDLEWARE
 // ======================================================
