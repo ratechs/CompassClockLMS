@@ -23,12 +23,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: LMS-react-app/package-lock.json
+          cache-dependency-path: lms-react-app/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./LMS-react-app
+        working-directory: ./lms-react-app
         run: npm install
 
       - name: Build
-        working-directory: ./LMS-react-app
+        working-directory: ./lms-react-app
         run: npm run build
