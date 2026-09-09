@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     },
     isApproved: {
       type: Boolean,
-      default: null, // Initial default is null, logic handled below
+      default: false, // Initial default is null, logic handled below
     },
     profilePicture: {
       type: String,
