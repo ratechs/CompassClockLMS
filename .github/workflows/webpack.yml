@@ -19,10 +19,10 @@ jobs:
         with:
           node-version: 22.x
 
-      - name: Install dependencies
-        working-directory: ./lms-react-app
-        run: npm install
+      # - name: Install dependencies
+      #   working-directory: ./lms-react-app
+      #   run: npm install
 
-      - name: Build React app
-        working-directory: ./lms-react-app
-        run: npm run build
+      # - name: Build React app
+      #   working-directory: ./lms-react-app
+      #   run: npm run build
