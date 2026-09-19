@@ -47,11 +47,6 @@ const courseSchema = new mongoose.Schema({
        ref: 'Institution',
        default: null
     },
-    
-    join_code: {
-        type: String,
-        default: null,
-    },
     subjects: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Subject'

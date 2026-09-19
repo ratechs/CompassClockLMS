@@ -308,39 +308,118 @@ export const getCourseByJoinCode = async (req, res) => {
 // Removed notification for requestCourseJoin as per your latest request
 export const requestCourseJoin = async (req, res) => {
   try {
-    const { joinCode, userId } = req.body; // Prefer keeping both in body
+    const { joinCode, userId } = req.body;
+
+    // -----------------------------------------
+    // VALIDATION
+    // -----------------------------------------
+
     if (!joinCode || !userId) {
-      return res.status(400).json({ message: 'Join code and userId are required' });
+      return res.status(400).json({
+        message: "Join code and userId are required",
+      });
     }
 
-    const course = await Course.findOne({ join_code: joinCode });
+    // -----------------------------------------
+    // FIND COURSE
+    // -----------------------------------------
+
+    const course = await Course.findOne({
+      join_code: joinCode.trim(),
+    });
+
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return res.status(404).json({
+        message: "Course not found",
+      });
     }
 
-    const alreadyRequested = course.joinRequests.some(
-      (joinReq) => joinReq.user.toString() === userId
+    // -----------------------------------------
+    // FIND USER
+    // -----------------------------------------
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Requesting user not found",
+      });
+    }
+
+    // -----------------------------------------
+    // CHECK EXISTING REQUEST
+    // -----------------------------------------
+
+    const existingRequest = course.joinRequests.find(
+      (joinReq) =>
+        joinReq.user &&
+        joinReq.user.toString() === userId.toString()
     );
 
-    const user = await User.findById(userId); // Use await here
-    if (!user) {
-      return res.status(404).json({ message: 'Requesting user not found' });
+    // -----------------------------------------
+    // ALREADY APPROVED
+    // -----------------------------------------
+
+    if (existingRequest?.status === "approved") {
+      return res.status(400).json({
+        message: "You are already enrolled in this course",
+        status: "approved",
+      });
     }
 
-    if (alreadyRequested) {
-      return res.status(400).json({ message: 'You have already requested to join this course', status: 'already_requested' });
+    // -----------------------------------------
+    // REQUEST ALREADY PENDING
+    // -----------------------------------------
+
+    if (existingRequest?.status === "pending") {
+      return res.status(400).json({
+        message: "Your request is already pending",
+        status: "pending",
+      });
     }
 
-    course.joinRequests.push({ user: userId });
+    // -----------------------------------------
+    // PREVIOUSLY REJECTED
+    // -----------------------------------------
+    // Allow the student to request again.
+    // Instead of pushing another request, update
+    // the previous rejected request.
+
+    if (existingRequest?.status === "rejected") {
+      existingRequest.status = "pending";
+
+      await course.save();
+
+      return res.status(200).json({
+        message: "Course join request submitted again",
+        status: "requested",
+      });
+    }
+
+    // -----------------------------------------
+    // NEW REQUEST
+    // -----------------------------------------
+
+    course.joinRequests.push({
+      user: userId,
+      status: "pending",
+    });
+
     await course.save();
 
-    res.status(200).json({ message: 'Join request submitted successfully', status: 'requested' });
+    return res.status(200).json({
+      message: "Join request submitted successfully",
+      status: "requested",
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error requesting course join', error: error.message });
+    console.error("requestCourseJoin error:", error);
+
+    return res.status(500).json({
+      message: "Error requesting course join",
+      error: error.message,
+    });
   }
 };
-
 export const getJoinRequestsForCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
@@ -429,5 +508,38 @@ export const getAllJoinRequests = async (req, res) => {
     res.status(200).json(allJoinRequests); // Send the response
   } catch (error) {
     res.status(500).json({ message: 'Error fetching join requests', error }); // Handle errors
+  }
+};
+
+export const getCountofJoinRequestsByCreator = async (req, res) => {
+  try {
+    const { creatorId } = req.params;
+
+    const courses = await Course.find({ created_by: creatorId });
+
+    let totalCount = 0, approvedCount = 0, rejectedCount = 0, pendingCount = 0;
+    courses.forEach(course => {
+      totalCount += course.joinRequests.length;
+      course.joinRequests.forEach(request => {
+        if (request.status === 'approved') {
+          approvedCount++;
+        } else if (request.status === 'rejected') {
+          rejectedCount++;
+        } else if (request.status === 'pending') {
+          pendingCount++;
+        }
+      });
+    });
+
+    let data = {
+      total: totalCount,
+      approved: approvedCount,
+      rejected: rejectedCount,
+      pending: pendingCount
+    }
+
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching join request count', error });
   }
 };

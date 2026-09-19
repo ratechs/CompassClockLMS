@@ -106,7 +106,7 @@ userSchema.pre('save', function (next) {
     if (this.role === 'teacher') {
       this.isApproved = false;
     } else {
-      this.isApproved = true;
+      this.isApproved = false;
     }
   }
   next();

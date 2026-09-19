@@ -16,6 +16,7 @@ import SubjectRoutes from './routes/subjectsRoutes.js';
 import CreateFullCourse from './routes/createFullCourse.js';
 import UpdateFullCourse from './routes/updateFullCourse.js';
 import StudentRoutes from './routes/studentRoutes.js';
+import institutionRoutes from './routes/institutionRoutes.js';
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/courses', CoursesRoutes);
 app.use('/api/subjects', SubjectRoutes);
 app.use('/api/materials', MaterialRoutes);
 app.use('/api/students', StudentRoutes);
+app.use('/api/institutions', institutionRoutes);
 
 // ======================================================
 // REACT FRONTEND PATH SETUP
