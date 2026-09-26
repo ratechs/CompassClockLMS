@@ -87,7 +87,8 @@ const Starter = () => {
 
   const fetchIns = async () => {
     try {
-      const response = await axios.get("/api/institution");
+      const response = await axios.get("/api/institutions");
+      console.log("the institutions", response?.data?.data)
 
       setInstitution(response?.data?.data || []);
     } catch (error) {
@@ -379,7 +380,7 @@ const Starter = () => {
                         --
                       </span>
                     ) : (
-                      card.value.toLocaleString()
+                      card?.value?.toLocaleString()
                     )}
                   </h2>
 

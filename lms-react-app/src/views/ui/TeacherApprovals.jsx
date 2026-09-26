@@ -1,56 +1,121 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuthcontext } from "../../contexts/Authcontext";
-import { Alert } from "reactstrap";
+import {
+  faCheck,
+  faClock,
+  faSearch,
+  faUserCheck,
+  faUsers,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const TeacherApprovals = () => {
+  const { authUser } = useAuthcontext();
+
   const [approvalList, setApprovalList] = useState([]);
   const [institution, setInstitution] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
-  const { authUser } = useAuthcontext();
-  const [usersData, setUsersData] = useState([]);
-  const [filterStatus, setFilterStatus] = useState("all"); // all | approved | pending
 
-  // Fetch institutions
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  // =========================================================
+  // FETCH INSTITUTIONS
+  // =========================================================
   useEffect(() => {
     const fetchInstitutions = async () => {
+      if (!authUser?.user?._id) {
+        return;
+      }
+
       try {
         const url =
           authUser?.user?.role === "coordinator"
-            ? `/api/institution/managment/${authUser.user._id}/`
-            : `/api/institution/`;
+            ? `/api/institutions/managment/${authUser.user._id}/`
+            : `/api/institutions/`;
+
         const res = await axios.get(url);
+
         setInstitution(res.data?.data || []);
       } catch (err) {
         console.error("Error fetching institutions:", err);
-        toast.error("Error loading Institutions");
+
+        toast.error(
+          err.response?.data?.message ||
+            "Error loading institutions"
+        );
       }
     };
 
     fetchInstitutions();
-  }, [authUser]);
+  }, [authUser?.user?._id, authUser?.user?.role]);
 
-  // Fetch users for each institution
+  // =========================================================
+  // FETCH USERS FROM INSTITUTIONS
+  // =========================================================
   useEffect(() => {
     const fetchApprovalsForInstitutions = async () => {
-      if (!institution || institution.length === 0) return;
+      if (!institution || institution.length === 0) {
+        setApprovalList([]);
+        setLoading(false);
+        return;
+      }
 
       try {
-        const approvalPromises = institution.map((item) =>
-          axios.get(`/api/users/institution/${item?._id}`).then((res) =>
-            res.data.map((user) => ({
+        setLoading(true);
+
+        const approvalPromises = institution.map(async (item) => {
+          try {
+            const res = await axios.get(
+              `/api/users/institution/${item?._id}`
+            );
+
+            const users = Array.isArray(res.data)
+              ? res.data
+              : [];
+
+            return users.map((user) => ({
               ...user,
-              institutionName: item?.name || "Unknown",
-            }))
-          )
-        );
+              institutionName:
+                item?.name || "Unknown Institution",
+            }));
+          } catch (error) {
+            console.error(
+              `Error fetching users for institution ${item?._id}:`,
+              error
+            );
+
+            return [];
+          }
+        });
 
         const results = await Promise.all(approvalPromises);
-        setApprovalList(results.flat());
+
+        const allUsers = results.flat();
+
+        // Only teachers
+        const teachers = allUsers.filter(
+          (user) =>
+            user.role === "teacher" ||
+            user.role === "instructor"
+        );
+
+        setApprovalList(teachers);
       } catch (err) {
-        toast.error("Error fetching teacher approvals");
+        console.error(
+          "Error fetching teacher approvals:",
+          err
+        );
+
+        toast.error(
+          err.response?.data?.message ||
+            "Error fetching teacher approvals"
+        );
       } finally {
         setLoading(false);
       }
@@ -59,212 +124,550 @@ const TeacherApprovals = () => {
     fetchApprovalsForInstitutions();
   }, [institution]);
 
-   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get("/api/users/");
-        console.log("the response", response);
-        setUsersData(response.data);
-      } catch (error) {
-        console.error("Error fetching courses:", error);
-        const errorMessage =
-          error.response?.data?.message ||
-          "Error fetching courses. Please try again.";
-        toast.error(errorMessage);
-      }
-    };
+  // =========================================================
+  // SEARCH + STATUS FILTER
+  // =========================================================
+  const filteredList = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
 
-    fetchUserData();
-  }, []);
+    return approvalList.filter((req) => {
+      const matchesSearch =
+        !query ||
+        req.username
+          ?.toLowerCase()
+          .includes(query) ||
+        req.fullname
+          ?.toLowerCase()
+          .includes(query) ||
+        req.email
+          ?.toLowerCase()
+          .includes(query) ||
+        req.phoneNumber
+          ?.toString()
+          .toLowerCase()
+          .includes(query) ||
+        req.institutionName
+          ?.toLowerCase()
+          .includes(query);
 
-  // Filter users based on global search query
-  const filteredList = usersData?.filter((req) => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      req.username?.toLowerCase().includes(query) ||
-      req.email?.toLowerCase().includes(query) ||
-      req.phoneNumber?.toString().toLowerCase().includes(query) ||
-      req.institutionName?.toLowerCase().includes(query) ||
-      req.status?.toLowerCase().includes(query) ||
-      req.isApproved?.toString().toLowerCase().includes(query) ||
-      req.isActive?.toString().toLowerCase().includes(query) ||
-      req.isAdmin?.toString().toLowerCase().includes(query);
+      const matchesStatus =
+        filterStatus === "all" ||
+        (filterStatus === "approved" &&
+          req.isApproved === true) ||
+        (filterStatus === "pending" &&
+          !req.isApproved);
 
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "approved" && req.isApproved === true) ||
-      (filterStatus === "pending" &&
-        (req.isApproved === false || req.isApproved === null));
+      return matchesSearch && matchesStatus;
+    });
+  }, [
+    approvalList,
+    searchQuery,
+    filterStatus,
+  ]);
 
-    return matchesSearch && matchesStatus;
-  });
+  // =========================================================
+  // COUNTS
+  // =========================================================
+  const totalTeachers = approvalList.length;
 
-  const handleApprove = async (req) => {
+  const approvedTeachers = approvalList.filter(
+    (user) => user.isApproved === true
+  ).length;
+
+  const pendingTeachers = approvalList.filter(
+    (user) => !user.isApproved
+  ).length;
+
+  // =========================================================
+  // APPROVE / REJECT
+  // =========================================================
+  const SendRequest = async (
+    approveID,
+    userId,
+    status
+  ) => {
     try {
-      await SendRequest(authUser?.user?._id, req._id, true);
-      updateRequestStatus(req._id, true);
-    } catch (err) {
-      toast.error("Error approving request");
-    }
-  };
+      setActionLoading(userId);
 
-  const handleReject = async (req) => {
-    try {
-      await SendRequest(authUser?.user?._id, req._id, false);
-      updateRequestStatus(req._id, false);
-    } catch (err) {
-      toast.error("Error rejecting request");
-    }
-  };
-
-  const updateRequestStatus = (id, status) => {
-    setApprovalList((prev) =>
-      prev.map((r) => (r._id === id ? { ...r, isApproved: status } : r))
-    );
-  };
-
-  const SendRequest = async (approveID, userId, status) => {
-    try {
-      const response = await axios.put(`/api/users/approve-teacher/${userId}`, {
-        approver_id: approveID,
-        status,
-      });
-      toast.success("Approved Teacher successfully");
-      return response.data;
-      window.location.reload();
-    } catch (error) {
-      console.log("the approving error", error);
-      toast.error(
-        error.response?.data?.message || "Failed to Approve Teacher."
+      const response = await axios.put(
+        `/api/users/approve-teacher/${userId}`,
+        {
+          approver_id: approveID,
+          status,
+        }
       );
+
+      setApprovalList((prev) =>
+        prev.map((user) =>
+          user._id === userId
+            ? {
+                ...user,
+                isApproved: status,
+                approved_by: status
+                  ? authUser?.user
+                  : null,
+              }
+            : user
+        )
+      );
+
+      toast.success(
+        status
+          ? "Teacher approved successfully"
+          : "Teacher rejected successfully"
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Teacher approval error:",
+        error
+      );
+
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to update teacher approval."
+      );
+
       throw error;
+    } finally {
+      setActionLoading(null);
     }
   };
-  console.log("the response", approvalList);
+
+  const handleApprove = async (user) => {
+    try {
+      await SendRequest(
+        authUser?.user?._id,
+        user._id,
+        true
+      );
+    } catch (err) {
+      // Error already handled in SendRequest
+    }
+  };
+
+  const handleReject = async (user) => {
+    try {
+      await SendRequest(
+        authUser?.user?._id,
+        user._id,
+        false
+      );
+    } catch (err) {
+      // Error already handled in SendRequest
+    }
+  };
+
+  // =========================================================
+  // FORMAT DATE
+  // =========================================================
+  const formatDate = (date) => {
+    if (!date) {
+      return "N/A";
+    }
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "N/A";
+    }
+
+    return parsedDate.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  // =========================================================
+  // RENDER
+  // =========================================================
   return (
-    <div className="approval-list">
-      <div className="d-lg-flex d-md-flex d-block justify-content-between align-item-center">
-        <div className="header-container">
-          <h2 className="list-heading-approval h4  mb-0">
-            Teacher Approval
-          </h2>
+    <div className="teacher-approval-page">
+
+      {/* HEADER */}
+      <div className="teacher-approval-header">
+        <div className="teacher-approval-title">
+          <div className="teacher-approval-title-icon">
+            <FontAwesomeIcon icon={faUserCheck} />
+          </div>
+
+          <div>
+            <h2>Teacher Approval</h2>
+            <p>
+              Review and manage teacher registration
+              requests
+            </p>
+          </div>
         </div>
 
-        <div className="global-search-box align-self-center">
+        <div className="teacher-approval-search">
+          <FontAwesomeIcon icon={faSearch} />
+
           <input
             type="text"
-            placeholder="Search Here ...."
+            placeholder="Search teachers..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="filter-input-global w-100"
+            onChange={(e) =>
+              setSearchQuery(e.target.value)
+            }
           />
         </div>
       </div>
-      {loading ? (
-        <p>Loading requests...</p>
-      ) : (
-        <div className="table-container-approval">
-          <div className="filter-buttons-approval d-flex gap-2 align-items-center my-2">
+
+      {/* SUMMARY CARDS */}
+      <div className="teacher-approval-summary">
+
+        <div className="teacher-approval-summary-card">
+          <div className="summary-icon total">
+            <FontAwesomeIcon icon={faUsers} />
+          </div>
+
+          <div>
+            <span>Total Teachers</span>
+            <strong>
+              {loading ? "..." : totalTeachers}
+            </strong>
+          </div>
+        </div>
+
+        <div className="teacher-approval-summary-card">
+          <div className="summary-icon approved">
+            <FontAwesomeIcon icon={faCheck} />
+          </div>
+
+          <div>
+            <span>Approved</span>
+            <strong>
+              {loading ? "..." : approvedTeachers}
+            </strong>
+          </div>
+        </div>
+
+        <div className="teacher-approval-summary-card">
+          <div className="summary-icon pending">
+            <FontAwesomeIcon icon={faClock} />
+          </div>
+
+          <div>
+            <span>Pending</span>
+            <strong>
+              {loading ? "..." : pendingTeachers}
+            </strong>
+          </div>
+        </div>
+
+      </div>
+
+      {/* TABLE CARD */}
+      <div className="teacher-approval-card">
+
+        {/* FILTER */}
+        <div className="teacher-approval-card-header">
+
+          <div>
+            <h3>Teacher Requests</h3>
+
+            <p>
+              {filteredList.length} teacher
+              {filteredList.length !== 1
+                ? "s"
+                : ""}
+            </p>
+          </div>
+
+          <div className="teacher-approval-filters">
+
             <button
-              className={`btn btn-sm ${
-                filterStatus === "all" ? "btn-primary" : "btn-outline-primary"
-              }`}
-              onClick={() => setFilterStatus("all")}
+              type="button"
+              className={
+                filterStatus === "all"
+                  ? "approval-filter active"
+                  : "approval-filter"
+              }
+              onClick={() =>
+                setFilterStatus("all")
+              }
             >
               All
             </button>
+
             <button
-              className={`btn btn-sm ${
-                filterStatus === "approved"
-                  ? "btn-success"
-                  : "btn-outline-success"
-              }`}
-              onClick={() => setFilterStatus("approved")}
-            >
-              Approved
-            </button>
-            <button
-              className={`btn btn-sm ${
+              type="button"
+              className={
                 filterStatus === "pending"
-                  ? "btn-warning"
-                  : "btn-outline-warning"
-              }`}
-              onClick={() => setFilterStatus("pending")}
+                  ? "approval-filter pending active"
+                  : "approval-filter pending"
+              }
+              onClick={() =>
+                setFilterStatus("pending")
+              }
             >
               Pending
             </button>
-          </div>
 
-          <table className="approval-table">
+            <button
+              type="button"
+              className={
+                filterStatus === "approved"
+                  ? "approval-filter approved active"
+                  : "approval-filter approved"
+              }
+              onClick={() =>
+                setFilterStatus("approved")
+              }
+            >
+              Approved
+            </button>
+
+          </div>
+        </div>
+
+        {/* TABLE */}
+        <div className="teacher-approval-table-wrapper">
+
+          <table className="teacher-approval-table">
+
             <thead>
               <tr>
-                <th>Username</th>
+                <th>Teacher</th>
                 <th>Email</th>
-                <th className="text-nowrap">Phone Number</th>
+                <th>Phone</th>
                 <th>Institution</th>
-                <th className="text-nowrap">Registered At</th>
-                <th>IsActive</th>
-                <th>IsApproved</th>
+                <th>Registered</th>
+                <th>Active</th>
+                <th>Status</th>
                 <th>Approved By</th>
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {filteredList.length === 0 ? (
+
+              {loading ? (
                 <tr>
-                  <td colSpan="9">No approval requests found.</td>
+                  <td
+                    colSpan="9"
+                    className="teacher-approval-loading"
+                  >
+                    <div className="approval-loader">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+
+                    Loading teacher requests...
+                  </td>
+                </tr>
+              ) : filteredList.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="9"
+                    className="teacher-approval-empty"
+                  >
+                    <FontAwesomeIcon
+                      icon={faUserCheck}
+                    />
+
+                    <h4>
+                      No teacher requests found
+                    </h4>
+
+                    <p>
+                      No teachers match your current
+                      search or filter.
+                    </p>
+                  </td>
                 </tr>
               ) : (
                 filteredList.map((req) => (
                   <tr key={req._id}>
-                    <td className="text-capitalize">
-                      {req.username || "Unknown"}
-                    </td>
-                    <td>{req.email || "Unknown"}</td>
-                    <td>{req.phoneNumber || "Unknown"}</td>
-                    <td className="text-nowrap">
-                      {req.institutionName || "Unknown"}
-                    </td>
-                    <td>{new Date(req.createdAt).toLocaleDateString()}</td>
-                    <td>{req.isActive ? "Yes" : "No"}</td>
-                    <td>{req.isApproved ? "Yes" : "No"}</td>
 
-                    <td className="text-nowrap text-capitalize">
-                      {req?.approved_by
-                        ? `${req?.approved_by?.username} (${
-                            req?.approved_by.isAdmin
-                              ? "Admin"
-                              : req?.approved_by?.role
-                          })`
-                        : "Not Yet Approved"}
-                    </td>
+                    {/* TEACHER */}
                     <td>
-                      {!req.isApproved ? (
-                        <div className="action-buttons">
-                          <button
-                            className="action-button-approve"
-                            onClick={() => handleApprove(req)}
-                          >
-                            Approve
-                          </button>
-                          {/* <button
-                            className="action-button-reject"
-                            onClick={() => handleReject(req)}
-                          >
-                            Reject
-                          </button> */}
+                      <div className="approval-teacher-info">
+
+                        <div className="approval-avatar">
+                          {(
+                            req.fullname ||
+                            req.username ||
+                            "T"
+                          )
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+
+                        <div>
+                          <strong>
+                            {req.fullname ||
+                              req.username ||
+                              "Unknown"}
+                          </strong>
+
+                          <span>
+                            @{req.username ||
+                              "unknown"}
+                          </span>
+                        </div>
+
+                      </div>
+                    </td>
+
+                    {/* EMAIL */}
+                    <td>
+                      {req.email || "N/A"}
+                    </td>
+
+                    {/* PHONE */}
+                    <td>
+                      {req.phoneNumber || "N/A"}
+                    </td>
+
+                    {/* INSTITUTION */}
+                    <td>
+                      <span className="institution-badge">
+                        {req.institutionName ||
+                          "Unknown"}
+                      </span>
+                    </td>
+
+                    {/* DATE */}
+                    <td className="text-nowrap">
+                      {formatDate(req.createdAt)}
+                    </td>
+
+                    {/* ACTIVE */}
+                    <td>
+                      <span
+                        className={
+                          req.isActive
+                            ? "approval-status active"
+                            : "approval-status inactive"
+                        }
+                      >
+                        <span></span>
+                        {req.isActive
+                          ? "Active"
+                          : "Inactive"}
+                      </span>
+                    </td>
+
+                    {/* APPROVAL */}
+                    <td>
+                      <span
+                        className={
+                          req.isApproved
+                            ? "approval-status approved"
+                            : "approval-status pending"
+                        }
+                      >
+                        <span></span>
+                        {req.isApproved
+                          ? "Approved"
+                          : "Pending"}
+                      </span>
+                    </td>
+
+                    {/* APPROVED BY */}
+                    <td>
+                      {req?.approved_by ? (
+                        <div className="approved-by">
+
+                          <strong>
+                            {req.approved_by
+                              ?.username ||
+                              req.approved_by
+                              ?.fullname ||
+                              "Approved"}
+                          </strong>
+
+                          <span>
+                            {req.approved_by
+                              ?.isAdmin
+                              ? "Admin"
+                              : req.approved_by
+                                  ?.role ||
+                                "User"}
+                          </span>
+
                         </div>
                       ) : (
-                        <em>Approved</em>
+                        <span className="not-approved">
+                          Not yet approved
+                        </span>
                       )}
                     </td>
+
+                    {/* ACTIONS */}
+                    <td>
+                      {!req.isApproved ? (
+                        <div className="approval-actions">
+
+                          <button
+                            type="button"
+                            className="approval-action approve"
+                            disabled={
+                              actionLoading ===
+                              req._id
+                            }
+                            onClick={() =>
+                              handleApprove(req)
+                            }
+                            title="Approve teacher"
+                          >
+                            <FontAwesomeIcon
+                              icon={faCheck}
+                            />
+
+                            <span>
+                              {actionLoading ===
+                              req._id
+                                ? "..."
+                                : "Approve"}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="approval-action reject"
+                            disabled={
+                              actionLoading ===
+                              req._id
+                            }
+                            onClick={() =>
+                              handleReject(req)
+                            }
+                            title="Reject teacher"
+                          >
+                            <FontAwesomeIcon
+                              icon={faXmark}
+                            />
+
+                            <span>Reject</span>
+                          </button>
+
+                        </div>
+                      ) : (
+                        <span className="approved-label">
+                          <FontAwesomeIcon
+                            icon={faCheck}
+                          />
+                          Approved
+                        </span>
+                      )}
+                    </td>
+
                   </tr>
                 ))
               )}
+
             </tbody>
+
           </table>
+
         </div>
-      )}
+      </div>
     </div>
   );
 };

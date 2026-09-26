@@ -2,6 +2,7 @@ import express, { Router } from 'express'
 import {ApprovingTeacher, assignGroupsToUser, destroyAll, destroyByUserNameOrId, getNotApprovedTeacherForInstitution, getUser,  getUserByINS,  getUserByRole,  getUserGroups, getUsers, removeGroupsFromUser, saveUsers, signInUser, signOutUser, signUpUser, toggleUserActiveStatus, updateUser, userCourses} from '../controllers/usersController.js'
 import authenticate from '../middleware/authenticate.js'
 import { AddUserCourse, getUserCourses } from '../controllers/userCoursesController.js'
+import teacherStarterController from '../controllers/dashboard/starterController.js'
 
 const router = express.Router()
 
@@ -46,5 +47,7 @@ router.get('/institution/:ins_id', getNotApprovedTeacherForInstitution);
 
 router.put('/approve-teacher/:user_id', ApprovingTeacher);
 router.get('/institution/:id/students', getUserByINS);
+
+router.get('/dashboard/:userID', teacherStarterController.teacherStarter);
 
 export default router

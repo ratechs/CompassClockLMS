@@ -7,8 +7,8 @@ const useSignup = () => {
   const [loading, setLoading] = useState(false)
   const {authUser, setAuthUser}= useAuthcontext()
 
-    const signup = async ({ fullname, email, username, phoneNumber, password, confirmPassword }) => {
-        const success = handleInputErrors({ fullname, email, username, phoneNumber, password, confirmPassword })
+    const signup = async ({ fullname, email, username, phoneNumber, role, password, confirmPassword }) => {
+        const success = handleInputErrors({ fullname, email, username, phoneNumber, role, password, confirmPassword })
 
         if(!success) return
 
@@ -20,7 +20,7 @@ const useSignup = () => {
                 headers: {
                       'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ fullname, email, username, phoneNumber, password, confirmPassword })
+                body: JSON.stringify({ fullname, email, username, phoneNumber, role, password, confirmPassword })
             })
 
             if (!res.ok) {
@@ -37,7 +37,7 @@ const useSignup = () => {
             setAuthUser(data)
 
         } catch (error) {
-            console.log(error)
+            console.log("the signup Error",error)
             toast.error(error.message)
         }finally{
             setLoading(false)

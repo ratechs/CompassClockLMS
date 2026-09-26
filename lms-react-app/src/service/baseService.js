@@ -74,3 +74,13 @@ export const getMaterialById = async (id) => {
     throw error;
   }
 }
+
+export const dashboardStarterService = async (userID) => {
+  try {
+    const data = await axios.get(`/api/users/dashboard/${userID}`);
+    return data
+  } catch (error) {
+    console.log('Error fetching dashboard starter data: ', error);
+    throw error;
+  }
+}

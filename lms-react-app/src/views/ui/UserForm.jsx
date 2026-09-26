@@ -77,7 +77,7 @@ const UserForm = ({ onSuccess }) => {
   }, [id]);
 
   useEffect(() => {
-    axios.get(`/api/institution`).then((res) => {
+    axios.get(`/api/institutions`).then((res) => {
       setInstitutions(res.data.data);
     });
   }, []);
@@ -283,7 +283,7 @@ const UserForm = ({ onSuccess }) => {
       </div>
 
       <div className="form-actions">
-        <button type="submit">{isEditMode ? "Update User" : "Create User"}</button>
+        <button className = "btn-gradient" type="submit">{isEditMode ? "Update User" : "Create User"}</button>
       </div>
     </form>
   );
