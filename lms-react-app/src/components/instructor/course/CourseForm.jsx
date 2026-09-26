@@ -1,23 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+
 import {
   Button,
-  Col,
   Form,
   FormGroup,
   Input,
   Label,
-  Nav,
-  NavItem,
-  NavLink,
   Row,
+  Col,
   Spinner,
 } from "reactstrap";
+
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import classNames from "classnames";
+
 import { useAuthcontext } from "../../../contexts/Authcontext";
 
 const TABS = {
@@ -26,2001 +25,2363 @@ const TABS = {
   MATERIALS: "materials",
 };
 
-const TAB_LIST = [
-  {
-    id: TABS.COURSE,
-    title: "Course Details",
-    shortTitle: "Course",
-    icon: "bi bi-book",
-  },
-  {
-    id: TABS.SUBJECTS,
-    title: "Subjects",
-    shortTitle: "Subjects",
-    icon: "bi bi-journal-text",
-  },
-  {
-    id: TABS.MATERIALS,
-    title: "Materials",
-    shortTitle: "Materials",
-    icon: "bi bi-file-earmark-text",
-  },
-];
 
-const createMaterial = () => ({
+const createEmptyMaterial = () => ({
   name: "",
   description: "",
   content_type: "",
   content_url: "",
 });
 
-const createSubject = () => ({
+
+const createEmptySubject = () => ({
   name: "",
   description: "",
   duration: "",
-  materials: [createMaterial()],
+  materials: [createEmptyMaterial()],
 });
 
-const EMPTY_COURSE = {
-  name: "",
-  description: "",
-  duration: "",
-  imageUrl: "",
-  course_type: "",
-  join_code: "",
-  subjects: [createSubject()],
-};
-
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, false] }],
-    ["bold", "italic", "underline"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link"],
-    ["clean"],
-  ],
-};
-
-const materialQuillModules = {
-  toolbar: [
-    [{ header: [1, 2, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link", "image"],
-    ["clean"],
-  ],
-};
-
-/* ---------------------------------------------------------
-   Reusable Components
---------------------------------------------------------- */
-
-const SectionHeader = ({ number, title, description }) => (
-  <div className="section-header mb-4">
-    <div className="section-number">{number}</div>
-
-    <div>
-      <h4 className="mb-1">{title}</h4>
-      {description && (
-        <p className="text-muted mb-0 small">{description}</p>
-      )}
-    </div>
-  </div>
-);
-
-const RichTextField = ({
-  label,
-  value,
-  onChange,
-  placeholder,
-  required = false,
-  modules = quillModules,
-}) => (
-  <FormGroup className="mb-4">
-    <Label className="form-label-custom">
-      {label} {required && <span className="text-danger">*</span>}
-    </Label>
-
-    <div className="rich-editor">
-      <ReactQuill
-        theme="snow"
-        value={value || ""}
-        onChange={onChange}
-        modules={modules}
-        placeholder={placeholder}
-      />
-    </div>
-  </FormGroup>
-);
-
-const FieldLabel = ({ children, required }) => (
-  <Label className="form-label-custom">
-    {children} {required && <span className="text-danger">*</span>}
-  </Label>
-);
-
-/* ---------------------------------------------------------
-   Subject Card
---------------------------------------------------------- */
-
-const SubjectCard = ({
-  subject,
-  index,
-  totalSubjects,
-  onChange,
-  onDelete,
-  disabled,
-}) => {
-  return (
-    <div className="dynamic-card mb-4">
-      <div className="dynamic-card-header">
-        <div className="d-flex align-items-center gap-3">
-          <div className="item-number">{index + 1}</div>
-
-          <div>
-            <h5 className="mb-0">
-              {subject.name || `Subject ${index + 1}`}
-            </h5>
-            <small className="text-muted">
-              Configure subject information
-            </small>
-          </div>
-        </div>
-
-        {totalSubjects > 1 && (
-          <Button
-            color="light"
-            className="delete-button"
-            onClick={onDelete}
-            disabled={disabled}
-            type="button"
-            title="Remove subject"
-          >
-            <i className="bi bi-trash3 text-danger" />
-          </Button>
-        )}
-      </div>
-
-      <div className="dynamic-card-body">
-        <Row>
-          <Col md="8">
-            <FormGroup>
-              <FieldLabel required>Subject Name</FieldLabel>
-
-              <Input
-                type="text"
-                value={subject.name}
-                placeholder="e.g. Introduction to React"
-                onChange={(e) =>
-                  onChange(index, "name", e.target.value)
-                }
-                disabled={disabled}
-              />
-            </FormGroup>
-          </Col>
-
-          <Col md="4">
-            <FormGroup>
-              <FieldLabel required>Duration</FieldLabel>
-
-              <div className="input-group">
-                <Input
-                  type="number"
-                  min="1"
-                  value={subject.duration}
-                  placeholder="e.g. 3"
-                  onChange={(e) =>
-                    onChange(index, "duration", e.target.value)
-                  }
-                  disabled={disabled}
-                />
-
-                <span className="input-group-text">Months</span>
-              </div>
-            </FormGroup>
-          </Col>
-        </Row>
-
-        <RichTextField
-          label="Subject Description"
-          required
-          value={subject.description}
-          onChange={(value) =>
-            onChange(index, "description", value)
-          }
-          placeholder="Describe what students will learn in this subject..."
-        />
-      </div>
-    </div>
-  );
-};
-
-/* ---------------------------------------------------------
-   Material Card
---------------------------------------------------------- */
-
-const MaterialCard = ({
-  material,
-  subjectIndex,
-  materialIndex,
-  totalMaterials,
-  onChange,
-  onDelete,
-  disabled,
-}) => {
-  return (
-    <div className="material-card">
-      <div className="material-header">
-        <div className="d-flex align-items-center gap-2">
-          <div className="material-icon">
-            <i className="bi bi-file-earmark" />
-          </div>
-
-          <div>
-            <strong>
-              {material.name || `Material ${materialIndex + 1}`}
-            </strong>
-
-            <div className="small text-muted">
-              Learning resource
-            </div>
-          </div>
-        </div>
-
-        {totalMaterials > 1 && (
-          <Button
-            color="light"
-            className="delete-button"
-            onClick={onDelete}
-            disabled={disabled}
-            type="button"
-          >
-            <i className="bi bi-trash3 text-danger" />
-          </Button>
-        )}
-      </div>
-
-      <div className="material-body">
-        <FormGroup>
-          <FieldLabel required>Material Name</FieldLabel>
-
-          <Input
-            type="text"
-            value={material.name}
-            placeholder="e.g. React Introduction PDF"
-            onChange={(e) =>
-              onChange(
-                subjectIndex,
-                materialIndex,
-                "name",
-                e.target.value
-              )
-            }
-            disabled={disabled}
-          />
-        </FormGroup>
-
-        <RichTextField
-          label="Description"
-          value={material.description}
-          onChange={(value) =>
-            onChange(
-              subjectIndex,
-              materialIndex,
-              "description",
-              value
-            )
-          }
-          placeholder="Describe this learning material..."
-          modules={materialQuillModules}
-        />
-
-        <Row>
-          <Col md="6">
-            <FormGroup>
-              <FieldLabel required>Content Type</FieldLabel>
-
-              <Input
-                type="select"
-                value={material.content_type}
-                onChange={(e) =>
-                  onChange(
-                    subjectIndex,
-                    materialIndex,
-                    "content_type",
-                    e.target.value
-                  )
-                }
-                disabled={disabled}
-              >
-                <option value="">Select content type</option>
-                <option value="PDF">PDF</option>
-                <option value="Video">Video</option>
-                <option value="Document">Document</option>
-                <option value="Image">Image</option>
-              </Input>
-            </FormGroup>
-          </Col>
-
-          <Col md="6">
-            <FormGroup>
-              <FieldLabel>Content URL</FieldLabel>
-
-              <Input
-                type="url"
-                value={material.content_url}
-                placeholder="https://example.com/file.pdf"
-                onChange={(e) =>
-                  onChange(
-                    subjectIndex,
-                    materialIndex,
-                    "content_url",
-                    e.target.value
-                  )
-                }
-                disabled={disabled}
-              />
-
-              <small className="text-muted">
-                Add the URL where students can access this material.
-              </small>
-            </FormGroup>
-          </Col>
-        </Row>
-      </div>
-    </div>
-  );
-};
-
-/* ---------------------------------------------------------
-   Main Component
---------------------------------------------------------- */
 
 const CourseForm = () => {
   const { authUser } = useAuthcontext();
+
   const { courseId } = useParams();
+
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState(TABS.COURSE);
-  const [courseData, setCourseData] = useState({
-    ...EMPTY_COURSE,
-    created_by: authUser?.user,
-  });
 
-  const [loading, setLoading] = useState(Boolean(courseId));
-  const [submitting, setSubmitting] = useState(false);
+  /* ============================================================
+     STATE
+  ============================================================ */
 
-  /* ---------------------------------------------------------
-     Current Step
-  --------------------------------------------------------- */
-
-  const currentStep = useMemo(
-    () => TAB_LIST.findIndex((tab) => tab.id === activeTab),
-    [activeTab]
+  const [activeTab, setActiveTab] = useState(
+    TABS.COURSE
   );
 
-  const progress = ((currentStep + 1) / TAB_LIST.length) * 100;
+  const [loading, setLoading] = useState(false);
 
-  /* ---------------------------------------------------------
-     Load Course
-  --------------------------------------------------------- */
+  const [courseData, setCourseData] = useState({
+    name: "",
+    description: "",
+    duration: "",
+    imageUrl: "",
+
+    course_type: "public",
+
+    is_paidCourse: false,
+    price: 0,
+    currency: "INR",
+
+    is_published: false,
+
+    join_code: "",
+
+    subjects: [
+      createEmptySubject(),
+    ],
+
+    created_by:
+      authUser?.user?._id ||
+      authUser?.user ||
+      "",
+  });
+
+
+  /* ============================================================
+     STEP INFORMATION
+  ============================================================ */
+
+  const steps = [
+    {
+      id: TABS.COURSE,
+      number: "01",
+      title: "Course",
+      description: "Basic information",
+      icon: "bi bi-book",
+    },
+    {
+      id: TABS.SUBJECTS,
+      number: "02",
+      title: "Subjects",
+      description: "Course structure",
+      icon: "bi bi-journal-text",
+    },
+    {
+      id: TABS.MATERIALS,
+      number: "03",
+      title: "Materials",
+      description: "Learning content",
+      icon: "bi bi-file-earmark-text",
+    },
+  ];
+
+
+  const currentStepIndex =
+    steps.findIndex(
+      (step) => step.id === activeTab
+    );
+
+
+  const progress =
+    ((currentStepIndex + 1) /
+      steps.length) *
+    100;
+
+
+  /* ============================================================
+     AUTH USER
+  ============================================================ */
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId && authUser?.user) {
+      setCourseData((prev) => ({
+        ...prev,
+        created_by:
+          authUser?.user?._id ||
+          authUser?.user ||
+          "",
+      }));
+    }
+  }, [authUser, courseId]);
 
-    const fetchCourse = async () => {
+
+  /* ============================================================
+     FETCH COURSE FOR EDIT
+  ============================================================ */
+
+  useEffect(() => {
+    const fetchCourseData = async () => {
+      if (!courseId) {
+        return;
+      }
+
+      setLoading(true);
+
       try {
-        setLoading(true);
+        const response = await axios.get(
+          `/api/courses/${courseId}`
+        );
 
-        const response = await axios.get(`/api/courses/${courseId}`);
+        const fetchedCourseData =
+          response.data;
 
-        const course = response.data;
 
-        const subjects =
-          Array.isArray(course.subjects) && course.subjects.length
-            ? course.subjects.map((subject) => ({
-                _id: subject?._id || "",
-                name: subject?.name || "",
-                description: subject?.description || "",
-                duration: subject?.duration || "",
+        let processedSubjects = [];
+
+
+        if (
+          Array.isArray(
+            fetchedCourseData.subjects
+          ) &&
+          fetchedCourseData.subjects.length
+        ) {
+          processedSubjects =
+            fetchedCourseData.subjects.map(
+              (subject) => ({
+                _id:
+                  subject?._id || "",
+
+                name:
+                  subject?.name || "",
+
+                description:
+                  subject?.description ||
+                  "",
+
+                duration:
+                  subject?.duration || "",
+
                 materials:
-                  Array.isArray(subject?.materials) &&
+                  Array.isArray(
+                    subject?.materials
+                  ) &&
                   subject.materials.length
-                    ? subject.materials.map((material) => ({
-                        _id: material?._id || "",
-                        name: material?.name || "",
-                        description: material?.description || "",
-                        content_type: material?.content_type || "",
-                        content_url: material?.content_url || "",
-                      }))
-                    : [createMaterial()],
-              }))
-            : [createSubject()];
+                    ? subject.materials.map(
+                        (material) => ({
+                          _id:
+                            material?._id ||
+                            "",
+
+                          name:
+                            material?.name ||
+                            "",
+
+                          description:
+                            material?.description ||
+                            "",
+
+                          content_type:
+                            material?.content_type ||
+                            "",
+
+                          content_url:
+                            material?.content_url ||
+                            "",
+                        })
+                      )
+                    : [
+                        createEmptyMaterial(),
+                      ],
+              })
+            );
+        } else {
+          processedSubjects = [
+            createEmptySubject(),
+          ];
+        }
+
 
         setCourseData({
-          name: course.name || "",
-          description: course.description || "",
-          duration: course.duration || "",
-          imageUrl: course.imageUrl || "",
-          course_type: course.course_type || "",
-          join_code: course.join_code || "",
-          subjects,
-          created_by: course.created_by || authUser?.user,
+          _id:
+            fetchedCourseData?._id ||
+            "",
+
+          name:
+            fetchedCourseData?.name ||
+            "",
+
+          description:
+            fetchedCourseData?.description ||
+            "",
+
+          duration:
+            fetchedCourseData?.duration ||
+            "",
+
+          imageUrl:
+            fetchedCourseData?.imageUrl ||
+            "",
+
+          course_type:
+            fetchedCourseData?.course_type ||
+            "public",
+
+          is_paidCourse:
+            fetchedCourseData?.is_paidCourse ===
+            true,
+
+          price:
+            fetchedCourseData?.price ?? 0,
+
+          currency:
+            fetchedCourseData?.currency ||
+            "INR",
+
+          is_published:
+            fetchedCourseData?.is_published ===
+            true,
+
+          join_code:
+            fetchedCourseData?.join_code ||
+            "",
+
+          subjects:
+            processedSubjects,
+
+          created_by:
+            fetchedCourseData?.created_by?._id ||
+            fetchedCourseData?.created_by ||
+            authUser?.user?._id ||
+            authUser?.user ||
+            "",
         });
+
       } catch (error) {
-        console.error("Error loading course:", error);
+        console.error(
+          "Error fetching course:",
+          error
+        );
 
         toast.error(
-          error.response?.data?.message ||
-            "Unable to load course data."
+          error?.response?.data?.message ||
+            "Failed to load course data."
         );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourse();
-  }, [courseId, authUser]);
 
-  /* ---------------------------------------------------------
-     Course Fields
-  --------------------------------------------------------- */
+    fetchCourseData();
 
-  const updateCourseField = (field, value) => {
+    // eslint-disable-next-line
+  }, [courseId]);
+
+
+  /* ============================================================
+     COURSE CHANGE
+  ============================================================ */
+
+  const handleCourseChange = (
+    field,
+    value
+  ) => {
     setCourseData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  /* ---------------------------------------------------------
-     Subject Functions
-  --------------------------------------------------------- */
 
-  const updateSubject = (index, field, value) => {
+  /* ============================================================
+     SUBJECT CHANGE
+  ============================================================ */
+
+  const handleSubjectChange = (
+    subjectIndex,
+    field,
+    value
+  ) => {
     setCourseData((prev) => {
-      const subjects = [...prev.subjects];
+      const updatedSubjects = [
+        ...prev.subjects,
+      ];
 
-      subjects[index] = {
-        ...subjects[index],
+      updatedSubjects[subjectIndex] = {
+        ...updatedSubjects[subjectIndex],
         [field]: value,
       };
 
       return {
         ...prev,
-        subjects,
+        subjects: updatedSubjects,
       };
     });
   };
 
-  const addSubject = () => {
-    setCourseData((prev) => ({
-      ...prev,
-      subjects: [...prev.subjects, createSubject()],
-    }));
-  };
 
-  const removeSubject = (index) => {
-    setCourseData((prev) => ({
-      ...prev,
-      subjects: prev.subjects.filter((_, i) => i !== index),
-    }));
-  };
+  /* ============================================================
+     MATERIAL CHANGE
+  ============================================================ */
 
-  /* ---------------------------------------------------------
-     Material Functions
-  --------------------------------------------------------- */
-
-  const updateMaterial = (
+  const handleMaterialChange = (
     subjectIndex,
     materialIndex,
     field,
     value
   ) => {
     setCourseData((prev) => {
-      const subjects = [...prev.subjects];
+      const updatedSubjects = [
+        ...prev.subjects,
+      ];
 
-      const materials = [...subjects[subjectIndex].materials];
+      const updatedMaterials = [
+        ...(updatedSubjects[
+          subjectIndex
+        ]?.materials || []),
+      ];
 
-      materials[materialIndex] = {
-        ...materials[materialIndex],
+      updatedMaterials[materialIndex] = {
+        ...updatedMaterials[materialIndex],
         [field]: value,
       };
 
-      subjects[subjectIndex] = {
-        ...subjects[subjectIndex],
-        materials,
+      updatedSubjects[subjectIndex] = {
+        ...updatedSubjects[subjectIndex],
+        materials:
+          updatedMaterials,
       };
 
       return {
         ...prev,
-        subjects,
+        subjects: updatedSubjects,
       };
     });
   };
 
-  const addMaterial = (subjectIndex) => {
-    setCourseData((prev) => {
-      const subjects = [...prev.subjects];
 
-      subjects[subjectIndex] = {
-        ...subjects[subjectIndex],
+  /* ============================================================
+     ADD SUBJECT
+  ============================================================ */
+
+  const addSubject = () => {
+    setCourseData((prev) => ({
+      ...prev,
+      subjects: [
+        ...prev.subjects,
+        createEmptySubject(),
+      ],
+    }));
+  };
+
+
+  /* ============================================================
+     REMOVE SUBJECT
+  ============================================================ */
+
+  const removeSubject = (
+    subjectIndex
+  ) => {
+    setCourseData((prev) => ({
+      ...prev,
+
+      subjects:
+        prev.subjects.filter(
+          (_, index) =>
+            index !== subjectIndex
+        ),
+    }));
+  };
+
+
+  /* ============================================================
+     ADD MATERIAL
+  ============================================================ */
+
+  const addMaterial = (
+    subjectIndex
+  ) => {
+    setCourseData((prev) => {
+      const updatedSubjects = [
+        ...prev.subjects,
+      ];
+
+      updatedSubjects[subjectIndex] = {
+        ...updatedSubjects[subjectIndex],
+
         materials: [
-          ...subjects[subjectIndex].materials,
-          createMaterial(),
+          ...(updatedSubjects[
+            subjectIndex
+          ]?.materials || []),
+
+          createEmptyMaterial(),
         ],
       };
 
       return {
         ...prev,
-        subjects,
+        subjects: updatedSubjects,
       };
     });
   };
 
-  const removeMaterial = (subjectIndex, materialIndex) => {
-    setCourseData((prev) => {
-      const subjects = [...prev.subjects];
 
-      subjects[subjectIndex] = {
-        ...subjects[subjectIndex],
-        materials: subjects[subjectIndex].materials.filter(
-          (_, index) => index !== materialIndex
+  /* ============================================================
+     REMOVE MATERIAL
+  ============================================================ */
+
+  const removeMaterial = (
+    subjectIndex,
+    materialIndex
+  ) => {
+    setCourseData((prev) => {
+      const updatedSubjects = [
+        ...prev.subjects,
+      ];
+
+      updatedSubjects[subjectIndex] = {
+        ...updatedSubjects[subjectIndex],
+
+        materials: (
+          updatedSubjects[
+            subjectIndex
+          ]?.materials || []
+        ).filter(
+          (_, index) =>
+            index !== materialIndex
         ),
       };
 
       return {
         ...prev,
-        subjects,
+        subjects: updatedSubjects,
       };
     });
   };
 
-  /* ---------------------------------------------------------
-     Validation
-  --------------------------------------------------------- */
 
-  const isEmptyDescription = (value) => {
-    if (!value) return true;
+  /* ============================================================
+     GENERATE JOIN CODE
+  ============================================================ */
 
-    const plainText = value
-      .replace(/<(.|\n)*?>/g, "")
-      .trim();
+  const generateJoinCode = () => {
+    const getRandomLetter = () =>
+      String.fromCharCode(
+        65 +
+          Math.floor(
+            Math.random() * 26
+          )
+      );
 
-    return !plainText;
+    const uniqueSuffix =
+      getRandomLetter() +
+      getRandomLetter();
+
+    return `NCL1-${uniqueSuffix}`;
   };
+
+
+  /* ============================================================
+     VALIDATION
+  ============================================================ */
 
   const validateCourse = () => {
     if (!courseData.name.trim()) {
-      toast.error("Please enter a course name.");
+      toast.error(
+        "Course name is required"
+      );
+
+      setActiveTab(TABS.COURSE);
+
       return false;
     }
 
-    if (isEmptyDescription(courseData.description)) {
-      toast.error("Please enter a course description.");
+
+    if (
+      !courseData.description.trim()
+    ) {
+      toast.error(
+        "Course description is required"
+      );
+
+      setActiveTab(TABS.COURSE);
+
       return false;
     }
+
 
     if (!courseData.duration) {
-      toast.error("Please enter the course duration.");
+      toast.error(
+        "Course duration is required"
+      );
+
+      setActiveTab(TABS.COURSE);
+
       return false;
     }
+
 
     if (!courseData.course_type) {
-      toast.error("Please select a course type.");
+      toast.error(
+        "Please select course type"
+      );
+
+      setActiveTab(TABS.COURSE);
+
       return false;
     }
 
-    return true;
-  };
 
-  const validateSubjects = () => {
-    if (!courseData.subjects.length) {
-      toast.error("Please add at least one subject.");
+    if (courseData.is_paidCourse) {
+      if (
+        courseData.price === "" ||
+        Number(courseData.price) <= 0
+      ) {
+        toast.error(
+          "Please enter a valid price"
+        );
+
+        setActiveTab(TABS.COURSE);
+
+        return false;
+      }
+    }
+
+
+    if (
+      !Array.isArray(
+        courseData.subjects
+      ) ||
+      courseData.subjects.length === 0
+    ) {
+      toast.error(
+        "Please add at least one subject"
+      );
+
+      setActiveTab(TABS.SUBJECTS);
+
       return false;
     }
 
-    for (let i = 0; i < courseData.subjects.length; i++) {
-      const subject = courseData.subjects[i];
+
+    for (
+      let i = 0;
+      i < courseData.subjects.length;
+      i++
+    ) {
+      const subject =
+        courseData.subjects[i];
 
       if (!subject.name.trim()) {
-        toast.error(`Please enter Subject ${i + 1} name.`);
+        toast.error(
+          `Subject ${
+            i + 1
+          } name is required`
+        );
+
+        setActiveTab(TABS.SUBJECTS);
+
         return false;
       }
 
-      if (isEmptyDescription(subject.description)) {
-        toast.error(
-          `Please enter Subject ${i + 1} description.`
-        );
-        return false;
-      }
 
       if (!subject.duration) {
         toast.error(
-          `Please enter Subject ${i + 1} duration.`
+          `Subject ${
+            i + 1
+          } duration is required`
         );
+
+        setActiveTab(TABS.SUBJECTS);
+
         return false;
       }
     }
 
-    return true;
-  };
-
-  const validateMaterials = () => {
-    for (let i = 0; i < courseData.subjects.length; i++) {
-      const subject = courseData.subjects[i];
-
-      if (!subject.materials.length) {
-        toast.error(
-          `Please add at least one material to Subject ${i + 1}.`
-        );
-        return false;
-      }
-
-      for (let j = 0; j < subject.materials.length; j++) {
-        const material = subject.materials[j];
-
-        if (!material.name.trim()) {
-          toast.error(
-            `Please enter Material ${j + 1} name in Subject ${i + 1}.`
-          );
-          return false;
-        }
-
-        if (!material.content_type) {
-          toast.error(
-            `Please select content type for Material ${
-              j + 1
-            } in Subject ${i + 1}.`
-          );
-          return false;
-        }
-      }
-    }
 
     return true;
   };
 
-  const validateStep = () => {
-    if (activeTab === TABS.COURSE) return validateCourse();
 
-    if (activeTab === TABS.SUBJECTS) return validateSubjects();
+  /* ============================================================
+     SUBMIT
+  ============================================================ */
 
-    if (activeTab === TABS.MATERIALS) return validateMaterials();
+  const handleSubmit = async (
+    e
+  ) => {
+    e.preventDefault();
 
-    return true;
-  };
 
-  /* ---------------------------------------------------------
-     Navigation
-  --------------------------------------------------------- */
-
-  const goNext = () => {
-    if (!validateStep()) return;
-
-    if (currentStep < TAB_LIST.length - 1) {
-      setActiveTab(TAB_LIST[currentStep + 1].id);
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  const goPrevious = () => {
-    if (currentStep > 0) {
-      setActiveTab(TAB_LIST[currentStep - 1].id);
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  const changeTab = (tabId) => {
-    const targetIndex = TAB_LIST.findIndex(
-      (tab) => tab.id === tabId
-    );
-
-    /*
-      Don't allow jumping forward without completing
-      the current step.
-    */
-    if (targetIndex > currentStep && !validateStep()) {
+    if (!validateCourse()) {
       return;
     }
 
-    setActiveTab(tabId);
-  };
 
-  /* ---------------------------------------------------------
-     Submit
-  --------------------------------------------------------- */
+    setLoading(true);
 
-  const generateJoinCode = () => {
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    const first =
-      letters[Math.floor(Math.random() * letters.length)];
-
-    const second =
-      letters[Math.floor(Math.random() * letters.length)];
-
-    return `CCLMS-${first}${second}`;
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!validateMaterials()) return;
 
     try {
-      setSubmitting(true);
+      const cleanedSubjects =
+        courseData.subjects.map(
+          (subject) => ({
+            ...(subject._id
+              ? {
+                  _id:
+                    subject._id,
+                }
+              : {}),
 
-      const dataToSend = {
-        ...courseData,
-        join_code: courseId
-          ? courseData.join_code
-          : generateJoinCode(),
-        created_by: authUser?.user,
+            name:
+              subject.name.trim(),
+
+            description:
+              subject.description ||
+              "",
+
+            duration:
+              Number(
+                subject.duration
+              ),
+
+            materials:
+              Array.isArray(
+                subject.materials
+              )
+                ? subject.materials.map(
+                    (material) => ({
+                      ...(material._id
+                        ? {
+                            _id:
+                              material._id,
+                          }
+                        : {}),
+
+                      name:
+                        material.name.trim(),
+
+                      description:
+                        material.description ||
+                        "",
+
+                      content_type:
+                        material.content_type ||
+                        "",
+
+                      content_url:
+                        material.content_url ||
+                        "",
+                    })
+                  )
+                : [],
+          })
+        );
+
+
+      const payload = {
+        name:
+          courseData.name.trim(),
+
+        description:
+          courseData.description,
+
+        duration:
+          Number(courseData.duration),
+
+        imageUrl:
+          courseData.imageUrl || "",
+
+        course_type:
+          courseData.course_type,
+
+        is_paidCourse:
+          Boolean(
+            courseData.is_paidCourse
+          ),
+
+        price:
+          courseData.is_paidCourse
+            ? Number(
+                courseData.price
+              )
+            : 0,
+
+        currency:
+          courseData.currency ||
+          "INR",
+
+        is_published:
+          Boolean(
+            courseData.is_published
+          ),
+
+        join_code:
+          courseData.join_code ||
+          generateJoinCode(),
+
+        subjects:
+          cleanedSubjects,
+
+        created_by:
+          courseData.created_by ||
+          authUser?.user?._id ||
+          authUser?.user ||
+          null,
       };
+
 
       if (courseId) {
         await axios.put(
           `/api/courses/update-course/${courseId}`,
-          dataToSend
+          payload
         );
 
-        toast.success("Course updated successfully!");
+        toast.success(
+          "Course updated successfully!"
+        );
       } else {
         await axios.post(
           "/api/courses/create-course",
-          dataToSend
+          payload
         );
 
-        toast.success("Course created successfully!");
+        toast.success(
+          "Course created successfully!"
+        );
       }
 
-      navigate("/instructor/courses");
+
+      navigate(
+        "/teacher/courses"
+      );
+
     } catch (error) {
-      console.error("Error submitting course:", error);
+      console.error(
+        "Error submitting course:",
+        error
+      );
 
       toast.error(
-        error.response?.data?.message ||
-          "Unable to save course. Please try again."
+        error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.response?.data?.details ||
+          "Error submitting form. Please try again."
       );
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
-  /* ---------------------------------------------------------
-     Loading
-  --------------------------------------------------------- */
 
-  if (loading) {
+  /* ============================================================
+     STEP NAVIGATION
+  ============================================================ */
+
+  const goToStep = (step) => {
+    setActiveTab(step);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+
+  const goNext = () => {
+    if (
+      activeTab === TABS.COURSE
+    ) {
+      if (!validateCourse()) {
+        return;
+      }
+
+      goToStep(
+        TABS.SUBJECTS
+      );
+
+      return;
+    }
+
+
+    if (
+      activeTab === TABS.SUBJECTS
+    ) {
+      if (
+        !courseData.subjects.length
+      ) {
+        toast.error(
+          "Please add at least one subject"
+        );
+
+        return;
+      }
+
+      goToStep(
+        TABS.MATERIALS
+      );
+
+      return;
+    }
+  };
+
+
+  const goPrevious = () => {
+    if (
+      activeTab === TABS.SUBJECTS
+    ) {
+      goToStep(
+        TABS.COURSE
+      );
+
+      return;
+    }
+
+
+    if (
+      activeTab === TABS.MATERIALS
+    ) {
+      goToStep(
+        TABS.SUBJECTS
+      );
+    }
+  };
+
+
+  /* ============================================================
+     LOADING
+  ============================================================ */
+
+  if (loading && courseId) {
     return (
       <div className="course-loading">
-        <Spinner color="primary" />
-        <p className="mt-3 mb-0">
-          Loading course information...
-        </p>
+
+        <Spinner />
+
+        <div className="mt-3">
+          Loading course data...
+        </div>
+
       </div>
     );
   }
 
-  /* ---------------------------------------------------------
-     Render
-  --------------------------------------------------------- */
+
+  /* ============================================================
+     UI
+  ============================================================ */
 
   return (
     <div className="course-form-page">
 
-      {/* Saving Overlay */}
-      {submitting && (
-        <div className="course-overlay">
-          <div className="saving-box">
-            <Spinner color="primary" />
-            <h6 className="mt-3 mb-1">
-              {courseId
-                ? "Updating course..."
-                : "Creating course..."}
-            </h6>
-            <small className="text-muted">
-              Please don't close this page.
-            </small>
-          </div>
-        </div>
-      )}
+      {/* ==========================================================
+          PAGE HEADER
+      ========================================================== */}
 
-      {/* Page Header */}
       <div className="course-page-header">
+
         <div>
-          <div className="d-flex align-items-center gap-2 mb-1">
-            <button
-              type="button"
-              className="back-button"
-              onClick={() =>
-                navigate("/instructor/courses")
-              }
-            >
-              <i className="bi bi-arrow-left" />
-            </button>
 
-            <h2 className="page-title mb-0">
-              {courseId
-                ? "Edit Course"
-                : "Create New Course"}
-            </h2>
-          </div>
-
-          <p className="text-muted mb-0">
+          <h1 className="page-title mb-1">
             {courseId
-              ? "Update your course information, subjects and learning materials."
-              : "Create a complete course with subjects and learning materials."}
-          </p>
+              ? "Edit Course"
+              : "Create Course"}
+          </h1>
+
+          <span className="text-muted">
+            {courseId
+              ? "Update your course information and learning content."
+              : "Create a complete course with subjects and materials."}
+          </span>
+
         </div>
+
+
+        <button
+          type="button"
+          className="back-button"
+          onClick={() =>
+            navigate(
+              "/teacher/courses"
+            )
+          }
+          title="Back to Courses"
+        >
+          <i className="bi bi-arrow-left"></i>
+        </button>
+
       </div>
 
-      {/* Step Indicator */}
+
+      {/* ==========================================================
+          STEP CARD
+      ========================================================== */}
+
       <div className="step-card">
 
         <div className="step-progress">
+
           <div
             className="step-progress-bar"
-            style={{ width: `${progress}%` }}
+            style={{
+              width: `${progress}%`,
+            }}
           />
+
         </div>
+
 
         <div className="steps">
-          {TAB_LIST.map((tab, index) => {
-            const isActive = activeTab === tab.id;
-            const isCompleted = index < currentStep;
 
-            return (
-              <button
-                type="button"
-                key={tab.id}
-                className={classNames("step", {
-                  active: isActive,
-                  completed: isCompleted,
-                })}
-                onClick={() => changeTab(tab.id)}
-              >
-                <div className="step-icon">
-                  {isCompleted ? (
-                    <i className="bi bi-check-lg" />
-                  ) : (
-                    <i className={tab.icon} />
-                  )}
-                </div>
+          {steps.map(
+            (
+              step,
+              index
+            ) => {
 
-                <div className="step-content">
-                  <small>
-                    Step {index + 1}
-                  </small>
+              const isActive =
+                activeTab ===
+                step.id;
 
-                  <strong className="d-none d-sm-block">
-                    {tab.title}
-                  </strong>
+              const isCompleted =
+                index <
+                currentStepIndex;
 
-                  <strong className="d-sm-none">
-                    {tab.shortTitle}
-                  </strong>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  className={`step ${
+                    isActive
+                      ? "active"
+                      : ""
+                  } ${
+                    isCompleted
+                      ? "completed"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    goToStep(
+                      step.id
+                    )
+                  }
+                >
 
-      {/* Main Form */}
-      <Form onSubmit={handleSubmit}>
+                  <div className="step-icon">
 
-        <div className="form-card">
-
-          {/* ================= COURSE ================= */}
-          {activeTab === TABS.COURSE && (
-            <div className="form-section">
-
-              <SectionHeader
-                number="01"
-                title="Course Information"
-                description="Enter the basic information students will see about this course."
-              />
-
-              <Row>
-
-                <Col lg="8">
-
-                  <FormGroup>
-                    <FieldLabel required>
-                      Course Name
-                    </FieldLabel>
-
-                    <Input
-                      type="text"
-                      value={courseData.name}
-                      placeholder="e.g. Full Stack Web Development"
-                      onChange={(e) =>
-                        updateCourseField(
-                          "name",
-                          e.target.value
-                        )
+                    <i
+                      className={
+                        isCompleted
+                          ? "bi bi-check-lg"
+                          : step.icon
                       }
-                      disabled={submitting}
-                      className="form-control-lg"
-                    />
+                    ></i>
 
-                    <small className="form-help">
-                      Choose a clear and descriptive name.
-                    </small>
-                  </FormGroup>
-
-                </Col>
-
-                <Col lg="4">
-
-                  <FormGroup>
-                    <FieldLabel required>
-                      Course Type
-                    </FieldLabel>
-
-                    <Input
-                      type="select"
-                      value={courseData.course_type}
-                      onChange={(e) =>
-                        updateCourseField(
-                          "course_type",
-                          e.target.value
-                        )
-                      }
-                      disabled={submitting}
-                      className="form-control-lg"
-                    >
-                      <option value="">
-                        Select course type
-                      </option>
-                      <option value="public">
-                        Public
-                      </option>
-                      <option value="private">
-                        Private
-                      </option>
-                    </Input>
-                  </FormGroup>
-
-                </Col>
-
-              </Row>
-
-              <RichTextField
-                label="Course Description"
-                required
-                value={courseData.description}
-                onChange={(value) =>
-                  updateCourseField(
-                    "description",
-                    value
-                  )
-                }
-                placeholder="Explain what students will learn in this course..."
-              />
-
-              <Row>
-
-                <Col md="6">
-
-                  <FormGroup>
-                    <FieldLabel required>
-                      Course Duration
-                    </FieldLabel>
-
-                    <div className="input-group">
-                      <Input
-                        type="number"
-                        min="1"
-                        value={courseData.duration}
-                        placeholder="e.g. 12"
-                        onChange={(e) =>
-                          updateCourseField(
-                            "duration",
-                            e.target.value
-                          )
-                        }
-                        disabled={submitting}
-                      />
-
-                      <span className="input-group-text">
-                        Months
-                      </span>
-                    </div>
-                  </FormGroup>
-
-                </Col>
-
-                <Col md="6">
-
-                  <FormGroup>
-                    <FieldLabel>
-                      Join Code
-                    </FieldLabel>
-
-                    <Input
-                      type="text"
-                      value={
-                        courseData.join_code ||
-                        "Generated automatically"
-                      }
-                      disabled
-                    />
-
-                    <small className="form-help">
-                      A unique join code will be generated
-                      when creating the course.
-                    </small>
-                  </FormGroup>
-
-                </Col>
-
-              </Row>
-
-              {/* Image Section */}
-              <div className="image-section">
-
-                <div className="image-section-header">
-                  <div>
-                    <h5 className="mb-1">
-                      Course Image
-                    </h5>
-
-                    <p className="text-muted small mb-0">
-                      Add an image URL to represent your course.
-                    </p>
                   </div>
 
-                  <i className="bi bi-image fs-4 text-primary" />
-                </div>
 
-                <Row className="align-items-center">
+                  <div className="step-content">
 
-                  <Col md="8">
+                    <small>
+                      Step{" "}
+                      {step.number}
+                    </small>
 
-                    <FormGroup className="mb-md-0">
-                      <FieldLabel>
-                        Image URL
-                      </FieldLabel>
+                    <strong>
+                      {step.title}
+                    </strong>
 
-                      <Input
-                        type="url"
-                        value={courseData.imageUrl}
-                        placeholder="https://example.com/course-image.jpg"
-                        onChange={(e) =>
-                          updateCourseField(
-                            "imageUrl",
-                            e.target.value
-                          )
-                        }
-                        disabled={submitting}
-                      />
-                    </FormGroup>
+                  </div>
 
-                  </Col>
-
-                  <Col md="4">
-
-                    {courseData.imageUrl ? (
-                      <div className="course-image-preview">
-                        <img
-                          src={courseData.imageUrl}
-                          alt="Course preview"
-                          onError={(e) => {
-                            e.currentTarget.style.display =
-                              "none";
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="course-image-placeholder">
-                        <i className="bi bi-image" />
-                        <span>Preview</span>
-                      </div>
-                    )}
-
-                  </Col>
-
-                </Row>
-              </div>
-
-            </div>
+                </button>
+              );
+            }
           )}
 
-          {/* ================= SUBJECTS ================= */}
-          {activeTab === TABS.SUBJECTS && (
+        </div>
+
+      </div>
+
+
+      {/* ==========================================================
+          FORM CARD
+      ========================================================== */}
+
+      <div className="form-card">
+
+        <Form
+          onSubmit={
+            handleSubmit
+          }
+        >
+
+          {/* ========================================================
+              STEP 1 - COURSE
+          ======================================================== */}
+
+          {activeTab ===
+            TABS.COURSE && (
+
             <div className="form-section">
 
               <div className="section-header-row">
 
-                <SectionHeader
-                  number="02"
-                  title="Course Subjects"
-                  description="Break your course into structured subjects."
-                />
+                <div className="section-header">
+
+                  <div className="section-number">
+                    01
+                  </div>
+
+                  <div>
+                    <h4 className="mb-1">
+                      Course Information
+                    </h4>
+
+                    <span className="form-help">
+                      Add the basic information and settings for your course.
+                    </span>
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* ----------------------------------------------------
+                  BASIC INFORMATION
+              ---------------------------------------------------- */}
+
+              <Row>
+
+                <Col
+                  xs="12"
+                  md="8"
+                >
+
+                  <FormGroup>
+
+                    <Label className="form-label-custom">
+                      Course Name
+                    </Label>
+
+                    <Input
+                      className="form-control"
+                      type="text"
+                      value={
+                        courseData.name
+                      }
+                      placeholder="Enter course name"
+                      onChange={(e) =>
+                        handleCourseChange(
+                          "name",
+                          e.target.value
+                        )
+                      }
+                      required
+                    />
+
+                  </FormGroup>
+
+                </Col>
+
+
+                <Col
+                  xs="12"
+                  md="4"
+                >
+
+                  <FormGroup>
+
+                    <Label className="form-label-custom">
+                      Duration
+                    </Label>
+
+                    <Input
+                      className="form-control"
+                      type="number"
+                      min="1"
+                      value={
+                        courseData.duration
+                      }
+                      placeholder="Months"
+                      onChange={(e) =>
+                        handleCourseChange(
+                          "duration",
+                          e.target.value
+                        )
+                      }
+                      required
+                    />
+
+                    <small className="form-help">
+                      Course duration in months.
+                    </small>
+
+                  </FormGroup>
+
+                </Col>
+
+              </Row>
+
+
+              {/* ----------------------------------------------------
+                  DESCRIPTION
+              ---------------------------------------------------- */}
+
+              <FormGroup>
+
+                <Label className="form-label-custom">
+                  Course Description
+                </Label>
+
+                <div className="rich-editor">
+
+                  <ReactQuill
+                    value={
+                      courseData.description
+                    }
+                    onChange={(value) =>
+                      handleCourseChange(
+                        "description",
+                        value
+                      )
+                    }
+                    modules={{
+                      toolbar: [
+                        [
+                          {
+                            header: [
+                              1,
+                              2,
+                              false,
+                            ],
+                          },
+                        ],
+                        [
+                          "bold",
+                          "italic",
+                          "underline",
+                          "strike",
+                          "blockquote",
+                        ],
+                        [
+                          {
+                            list: "ordered",
+                          },
+                          {
+                            list: "bullet",
+                          },
+                        ],
+                        [
+                          "link",
+                          "image",
+                        ],
+                        [
+                          "clean",
+                        ],
+                      ],
+                    }}
+                  />
+
+                </div>
+
+              </FormGroup>
+
+
+              {/* ----------------------------------------------------
+                  IMAGE
+              ---------------------------------------------------- */}
+
+              <div className="image-section">
+
+                <div className="image-section-header">
+
+                  <div>
+
+                    <h5 className="mb-1">
+                      Course Image
+                    </h5>
+
+                    <small className="form-help">
+                      Add an image URL for the course.
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                <FormGroup>
+
+                  <Input
+                    className="form-control"
+                    type="url"
+                    value={
+                      courseData.imageUrl
+                    }
+                    placeholder="https://example.com/course-image.jpg"
+                    onChange={(e) =>
+                      handleCourseChange(
+                        "imageUrl",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </FormGroup>
+
+
+                {courseData.imageUrl ? (
+
+                  <div className="course-image-preview">
+
+                    <img
+                      src={
+                        courseData.imageUrl
+                      }
+                      alt="Course Preview"
+                      onError={(
+                        e
+                      ) => {
+                        e.currentTarget.style.display =
+                          "none";
+                      }}
+                    />
+
+                  </div>
+
+                ) : (
+
+                  <div className="course-image-placeholder">
+
+                    <i className="bi bi-image"></i>
+
+                    <span>
+                      No image preview
+                    </span>
+
+                  </div>
+
+                )}
+
+              </div>
+
+
+              {/* ----------------------------------------------------
+                  VISIBILITY + PRICING
+              ---------------------------------------------------- */}
+
+              <Row className="mt-4">
+
+                <Col
+                  xs="12"
+                  md="6"
+                >
+
+                  <FormGroup>
+
+                    <Label className="form-label-custom">
+                      Course Visibility
+                    </Label>
+
+                    <Input
+                      className="form-select"
+                      type="select"
+                      value={
+                        courseData.course_type
+                      }
+                      onChange={(e) =>
+                        handleCourseChange(
+                          "course_type",
+                          e.target.value
+                        )
+                      }
+                    >
+
+                      <option value="public">
+                        Public
+                      </option>
+
+                      <option value="private">
+                        Private
+                      </option>
+
+                    </Input>
+
+                    <small className="form-help">
+
+                      {courseData.course_type ===
+                      "private"
+                        ? "Students must request access before joining."
+                        : "Students can discover this course directly."}
+
+                    </small>
+
+                  </FormGroup>
+
+                </Col>
+
+
+                <Col
+                  xs="12"
+                  md="6"
+                >
+
+                  <FormGroup>
+
+                    <Label className="form-label-custom">
+                      Pricing
+                    </Label>
+
+                    <Input
+                      className="form-select"
+                      type="select"
+                      value={
+                        courseData.is_paidCourse
+                          ? "paid"
+                          : "free"
+                      }
+                      onChange={(e) => {
+
+                        const isPaid =
+                          e.target.value ===
+                          "paid";
+
+                        handleCourseChange(
+                          "is_paidCourse",
+                          isPaid
+                        );
+
+                        if (!isPaid) {
+                          handleCourseChange(
+                            "price",
+                            0
+                          );
+                        }
+
+                      }}
+                    >
+
+                      <option value="free">
+                        Free Course
+                      </option>
+
+                      <option value="paid">
+                        Paid Course
+                      </option>
+
+                    </Input>
+
+                  </FormGroup>
+
+                </Col>
+
+              </Row>
+
+
+              {/* ----------------------------------------------------
+                  PAID COURSE
+              ---------------------------------------------------- */}
+
+              {courseData.is_paidCourse && (
+
+                <div className="dynamic-card mb-4">
+
+                  <div className="dynamic-card-header">
+
+                    <div>
+                      <strong>
+                        Course Pricing
+                      </strong>
+
+                      <small className="form-help">
+                        Set the price students need to pay.
+                      </small>
+                    </div>
+
+                  </div>
+
+
+                  <div className="dynamic-card-body">
+
+                    <Row>
+
+                      <Col
+                        xs="12"
+                        md="8"
+                      >
+
+                        <FormGroup>
+
+                          <Label className="form-label-custom">
+                            Price
+                          </Label>
+
+                          <Input
+                            className="form-control"
+                            type="number"
+                            min="1"
+                            step="0.01"
+                            value={
+                              courseData.price
+                            }
+                            placeholder="Enter price"
+                            onChange={(e) =>
+                              handleCourseChange(
+                                "price",
+                                e.target.value
+                              )
+                            }
+                          />
+
+                        </FormGroup>
+
+                      </Col>
+
+
+                      <Col
+                        xs="12"
+                        md="4"
+                      >
+
+                        <FormGroup>
+
+                          <Label className="form-label-custom">
+                            Currency
+                          </Label>
+
+                          <Input
+                            className="form-select"
+                            type="select"
+                            value={
+                              courseData.currency
+                            }
+                            onChange={(e) =>
+                              handleCourseChange(
+                                "currency",
+                                e.target.value
+                              )
+                            }
+                          >
+
+                            <option value="INR">
+                              INR ₹
+                            </option>
+
+                            <option value="USD">
+                              USD $
+                            </option>
+
+                            <option value="EUR">
+                              EUR €
+                            </option>
+
+                          </Input>
+
+                        </FormGroup>
+
+                      </Col>
+
+                    </Row>
+
+                  </div>
+
+                </div>
+
+              )}
+
+
+              {/* ----------------------------------------------------
+                  PUBLISH
+              ---------------------------------------------------- */}
+
+              <div className="dynamic-card mb-4">
+
+                <div className="dynamic-card-header">
+
+                  <div>
+                    <strong>
+                      Publication
+                    </strong>
+
+                    <small className="form-help">
+                      Decide whether students can see this course.
+                    </small>
+                  </div>
+
+                </div>
+
+
+                <div className="dynamic-card-body">
+
+                  <div className="d-flex align-items-center gap-3">
+
+                    <Input
+                      type="checkbox"
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                      }}
+                      checked={
+                        courseData.is_published
+                      }
+                      onChange={(e) =>
+                        handleCourseChange(
+                          "is_published",
+                          e.target.checked
+                        )
+                      }
+                    />
+
+                    <div>
+
+                      <strong>
+                        {courseData.is_published
+                          ? "Published"
+                          : "Draft"}
+                      </strong>
+
+                      <div className="form-help">
+                        {courseData.is_published
+                          ? "This course is published."
+                          : "This course is saved as a draft."}
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {/* ----------------------------------------------------
+                  JOIN CODE
+              ---------------------------------------------------- */}
+
+              <div className="dynamic-card">
+
+                <div className="dynamic-card-header">
+
+                  <div>
+                    <strong>
+                      Course Join Code
+                    </strong>
+
+                    <small className="form-help">
+                      Used for course access requests.
+                    </small>
+                  </div>
+
+                </div>
+
+
+                <div className="dynamic-card-body">
+
+                  <Input
+                    className="form-control"
+                    type="text"
+                    value={
+                      courseData.join_code
+                    }
+                    placeholder="Generated automatically"
+                    readOnly
+                  />
+
+                  <small className="form-help">
+                    A join code is generated automatically when the course is created.
+                  </small>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          )}
+
+
+          {/* ========================================================
+              STEP 2 - SUBJECTS
+          ======================================================== */}
+
+          {activeTab ===
+            TABS.SUBJECTS && (
+
+            <div className="form-section">
+
+              <div className="section-header-row">
+
+                <div className="section-header">
+
+                  <div className="section-number">
+                    02
+                  </div>
+
+                  <div>
+
+                    <h4 className="mb-1">
+                      Course Subjects
+                    </h4>
+
+                    <span className="form-help">
+                      Organize your course into subjects or modules.
+                    </span>
+
+                  </div>
+
+                </div>
+
 
                 <Button
                   color="primary"
                   type="button"
-                  onClick={addSubject}
-                  disabled={submitting}
-                  className="add-button btn-gradient"
+                  className="add-button"
+                  onClick={
+                    addSubject
+                  }
                 >
-                  <i className="bi bi-plus-lg  text-white" />
-                  Add
+
+                  <i className="bi bi-plus-lg me-1"></i>
+
+                  Add Subject
+
                 </Button>
 
               </div>
 
-              {courseData.subjects.map(
-                (subject, index) => (
-                  <SubjectCard
-                    key={subject._id || index}
-                    subject={subject}
-                    index={index}
-                    totalSubjects={
-                      courseData.subjects.length
+
+              {courseData.subjects.length ===
+              0 ? (
+
+                <div className="empty-add-box">
+
+                  <i className="bi bi-journal-plus"></i>
+
+                  <div>
+
+                    <strong>
+                      No subjects added
+                    </strong>
+
+                    <small className="form-help">
+                      Add your first subject to start building the course.
+                    </small>
+
+                  </div>
+
+                  <Button
+                    color="primary"
+                    type="button"
+                    onClick={
+                      addSubject
                     }
-                    onChange={updateSubject}
-                    onDelete={() =>
-                      removeSubject(index)
-                    }
-                    disabled={submitting}
-                  />
-                )
-              )}
+                  >
+                    Add Subject
+                  </Button>
 
-              <div className="empty-add-box">
-                <i className="bi bi-journal-plus" />
-
-                <div>
-                  <strong>
-                    Need another subject?
-                  </strong>
-
-                  <p className="mb-0 text-muted small">
-                    Add as many subjects as your course needs.
-                  </p>
                 </div>
 
-                <Button
-                  color="outline-primary"
-                  size="xl"
-                  type="button"
-                  onClick={addSubject}
-                  disabled={submitting}
-                  className = "btn-gradient px-3"
-                >
-                  <i className="bi bi-plus-lg me-2 text-white" />
-                  Add
-                </Button>
-              </div>
+              ) : (
+
+                courseData.subjects.map(
+                  (
+                    subject,
+                    subjectIndex
+                  ) => (
+
+                    <div
+                      className="dynamic-card mb-4"
+                      key={
+                        subject._id ||
+                        subjectIndex
+                      }
+                    >
+
+                      {/* HEADER */}
+
+                      <div className="dynamic-card-header">
+
+                        <div className="d-flex align-items-center gap-3">
+
+                          <div className="item-number">
+                            {String(
+                              subjectIndex +
+                                1
+                            ).padStart(
+                              2,
+                              "0"
+                            )}
+                          </div>
+
+                          <div>
+
+                            <strong>
+                              {subject.name ||
+                                `Subject ${
+                                  subjectIndex +
+                                  1
+                                }`}
+                            </strong>
+
+                            <small className="form-help">
+                              Subject information
+                            </small>
+
+                          </div>
+
+                        </div>
+
+
+                        {courseData.subjects
+                          .length > 1 && (
+
+                          <Button
+                            type="button"
+                            color="light"
+                            className="delete-button"
+                            onClick={() =>
+                              removeSubject(
+                                subjectIndex
+                              )
+                            }
+                            title="Remove subject"
+                          >
+
+                            <i className="bi bi-trash text-danger"></i>
+
+                          </Button>
+
+                        )}
+
+                      </div>
+
+
+                      {/* BODY */}
+
+                      <div className="dynamic-card-body">
+
+                        <Row>
+
+                          <Col
+                            xs="12"
+                            md="8"
+                          >
+
+                            <FormGroup>
+
+                              <Label className="form-label-custom">
+                                Subject Name
+                              </Label>
+
+                              <Input
+                                className="form-control"
+                                type="text"
+                                value={
+                                  subject.name
+                                }
+                                placeholder="Enter subject name"
+                                onChange={(e) =>
+                                  handleSubjectChange(
+                                    subjectIndex,
+                                    "name",
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              />
+
+                            </FormGroup>
+
+                          </Col>
+
+
+                          <Col
+                            xs="12"
+                            md="4"
+                          >
+
+                            <FormGroup>
+
+                              <Label className="form-label-custom">
+                                Duration
+                              </Label>
+
+                              <Input
+                                className="form-control"
+                                type="number"
+                                min="1"
+                                value={
+                                  subject.duration
+                                }
+                                placeholder="Months"
+                                onChange={(e) =>
+                                  handleSubjectChange(
+                                    subjectIndex,
+                                    "duration",
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              />
+
+                            </FormGroup>
+
+                          </Col>
+
+                        </Row>
+
+
+                        <FormGroup>
+
+                          <Label className="form-label-custom">
+                            Subject Description
+                          </Label>
+
+                          <div className="rich-editor">
+
+                            <ReactQuill
+                              value={
+                                subject.description
+                              }
+                              onChange={(
+                                value
+                              ) =>
+                                handleSubjectChange(
+                                  subjectIndex,
+                                  "description",
+                                  value
+                                )
+                              }
+                            />
+
+                          </div>
+
+                        </FormGroup>
+
+                      </div>
+
+                    </div>
+
+                  )
+                )
+
+              )}
 
             </div>
+
           )}
 
-          {/* ================= MATERIALS ================= */}
-          {activeTab === TABS.MATERIALS && (
+
+          {/* ========================================================
+              STEP 3 - MATERIALS
+          ======================================================== */}
+
+          {activeTab ===
+            TABS.MATERIALS && (
+
             <div className="form-section">
 
-              <SectionHeader
-                number="03"
-                title="Learning Materials"
-                description="Add PDFs, videos, documents or other resources for each subject."
-              />
+              <div className="section-header-row">
+
+                <div className="section-header">
+
+                  <div className="section-number">
+                    03
+                  </div>
+
+                  <div>
+
+                    <h4 className="mb-1">
+                      Learning Materials
+                    </h4>
+
+                    <span className="form-help">
+                      Add videos, PDFs, documents, images and links.
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
 
               {courseData.subjects.map(
-                (subject, subjectIndex) => (
+                (
+                  subject,
+                  subjectIndex
+                ) => (
+
                   <div
-                    key={subject._id || subjectIndex}
                     className="subject-material-section"
+                    key={
+                      subject._id ||
+                      subjectIndex
+                    }
                   >
+
+                    {/* SUBJECT HEADER */}
 
                     <div className="material-subject-header">
 
                       <div className="subject-heading-icon">
-                        <i className="bi bi-journal-text" />
+
+                        <i className="bi bi-journal-text"></i>
+
                       </div>
 
-                      <div className="flex-grow-1">
-                        <h5 className="mb-1">
+                      <div>
+
+                        <strong>
                           {subject.name ||
                             `Subject ${
-                              subjectIndex + 1
+                              subjectIndex +
+                              1
                             }`}
-                        </h5>
+                        </strong>
 
-                        <small className="text-muted">
-                          {subject.materials.length}{" "}
-                          {subject.materials.length === 1
-                            ? "material"
-                            : "materials"}
+                        <small className="form-help">
+                          {subject.materials?.length ||
+                            0}{" "}
+                          material(s)
                         </small>
-                      </div>
 
-                      <Button
-                        color="primary"
-                        size="xl"
-                        className="btn-gradient px-3"
-                        type="button"
-                        onClick={() =>
-                          addMaterial(subjectIndex)
-                        }
-                        disabled={submitting}
-                      >
-                        <i className="bi bi-plus-lg me-1" />
-                        Add
-                        <span className="d-sm-none">
-                          Add
-                        </span>
-                      </Button>
+                      </div>
 
                     </div>
 
+
+                    {/* MATERIALS */}
+
                     <div className="materials-grid">
 
-                      {subject.materials.map(
-                        (material, materialIndex) => (
-                          <MaterialCard
+                      {(
+                        subject.materials ||
+                        []
+                      ).map(
+                        (
+                          material,
+                          materialIndex
+                        ) => (
+
+                          <div
+                            className="material-card"
                             key={
                               material._id ||
                               materialIndex
                             }
-                            material={material}
-                            subjectIndex={
-                              subjectIndex
-                            }
-                            materialIndex={
-                              materialIndex
-                            }
-                            totalMaterials={
-                              subject.materials.length
-                            }
-                            onChange={
-                              updateMaterial
-                            }
-                            onDelete={() =>
-                              removeMaterial(
-                                subjectIndex,
-                                materialIndex
-                              )
-                            }
-                            disabled={submitting}
-                          />
+                          >
+
+                            {/* MATERIAL HEADER */}
+
+                            <div className="material-header">
+
+                              <div className="d-flex align-items-center gap-2">
+
+                                <div className="material-icon">
+
+                                  <i className="bi bi-file-earmark-text"></i>
+
+                                </div>
+
+                                <strong>
+                                  Material{" "}
+                                  {materialIndex +
+                                    1}
+                                </strong>
+
+                              </div>
+
+
+                              {subject
+                                .materials
+                                .length >
+                                1 && (
+
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={() =>
+                                    removeMaterial(
+                                      subjectIndex,
+                                      materialIndex
+                                    )
+                                  }
+                                  title="Remove material"
+                                >
+
+                                  <i className="bi bi-trash"></i>
+
+                                </button>
+
+                              )}
+
+                            </div>
+
+
+                            {/* MATERIAL BODY */}
+
+                            <div className="material-body">
+
+                              <FormGroup>
+
+                                <Label className="form-label-custom">
+                                  Material Name
+                                </Label>
+
+                                <Input
+                                  className="form-control"
+                                  type="text"
+                                  value={
+                                    material.name
+                                  }
+                                  placeholder="Enter material name"
+                                  onChange={(
+                                    e
+                                  ) =>
+                                    handleMaterialChange(
+                                      subjectIndex,
+                                      materialIndex,
+                                      "name",
+                                      e.target
+                                        .value
+                                    )
+                                  }
+                                  required
+                                />
+
+                              </FormGroup>
+
+
+                              <FormGroup>
+
+                                <Label className="form-label-custom">
+                                  Description
+                                </Label>
+
+                                <Input
+                                  className="form-control"
+                                  type="textarea"
+                                  rows="3"
+                                  value={
+                                    material.description
+                                  }
+                                  placeholder="Enter material description"
+                                  onChange={(
+                                    e
+                                  ) =>
+                                    handleMaterialChange(
+                                      subjectIndex,
+                                      materialIndex,
+                                      "description",
+                                      e.target
+                                        .value
+                                    )
+                                  }
+                                />
+
+                              </FormGroup>
+
+
+                              <FormGroup>
+
+                                <Label className="form-label-custom">
+                                  Content Type
+                                </Label>
+
+                                <Input
+                                  className="form-select"
+                                  type="select"
+                                  value={
+                                    material.content_type
+                                  }
+                                  onChange={(
+                                    e
+                                  ) =>
+                                    handleMaterialChange(
+                                      subjectIndex,
+                                      materialIndex,
+                                      "content_type",
+                                      e.target
+                                        .value
+                                    )
+                                  }
+                                  required
+                                >
+
+                                  <option value="">
+                                    Select Content Type
+                                  </option>
+
+                                  <option value="PDF">
+                                    PDF
+                                  </option>
+
+                                  <option value="Video">
+                                    Video
+                                  </option>
+
+                                  <option value="Document">
+                                    Document
+                                  </option>
+
+                                  <option value="Image">
+                                    Image
+                                  </option>
+
+                                  <option value="Link">
+                                    Link
+                                  </option>
+
+                                </Input>
+
+                              </FormGroup>
+
+
+                              <FormGroup>
+
+                                <Label className="form-label-custom">
+                                  Content URL
+                                </Label>
+
+                                <Input
+                                  className="form-control"
+                                  type="url"
+                                  value={
+                                    material.content_url
+                                  }
+                                  placeholder="https://..."
+                                  onChange={(
+                                    e
+                                  ) =>
+                                    handleMaterialChange(
+                                      subjectIndex,
+                                      materialIndex,
+                                      "content_url",
+                                      e.target
+                                        .value
+                                    )
+                                  }
+                                  required
+                                />
+
+                              </FormGroup>
+
+                            </div>
+
+                          </div>
+
                         )
                       )}
 
                     </div>
 
+
+                    {/* ADD MATERIAL */}
+
+                    <div className="px-3 pb-3">
+
+                      <Button
+                        type="button"
+                        color="light"
+                        className="w-100 add-button"
+                        onClick={() =>
+                          addMaterial(
+                            subjectIndex
+                          )
+                        }
+                      >
+
+                        <i className="bi bi-plus-circle me-1"></i>
+
+                        Add Material
+
+                      </Button>
+
+                    </div>
+
                   </div>
+
                 )
               )}
 
             </div>
+
+          )}
+
+        </Form>
+
+      </div>
+
+
+      {/* ==========================================================
+          NAVIGATION
+      ========================================================== */}
+
+      <div className="form-navigation">
+
+        <div>
+
+          {currentStepIndex > 0 && (
+
+            <Button
+              color="light"
+              type="button"
+              className="navigation-button"
+              onClick={
+                goPrevious
+              }
+            >
+
+              <i className="bi bi-arrow-left me-1"></i>
+
+              Previous
+
+            </Button>
+
           )}
 
         </div>
 
-        {/* Navigation */}
-        <div className="form-navigation">
 
-          <Button
-            type="button"
-            color="light"
-            onClick={
-              currentStep === 0
-                ? () =>
-                    navigate(
-                      "/instructor/courses"
-                    )
-                : goPrevious
-            }
-            disabled={submitting}
-            className="navigation-button"
-          >
-            <i className="bi bi-arrow-left me-2" />
+        <div className="navigation-step">
 
-            {currentStep === 0
-              ? "Cancel"
-              : "Previous"}
-          </Button>
+          Step{" "}
+          {currentStepIndex + 1}{" "}
+          of {steps.length}
 
-          <div className="navigation-step">
-            {currentStep + 1} / {TAB_LIST.length}
-          </div>
+        </div>
 
-          {currentStep < TAB_LIST.length - 1 ? (
+
+        <div>
+
+          {currentStepIndex <
+          steps.length - 1 ? (
+
             <Button
-              type="button"
               color="primary"
-              onClick={goNext}
-              disabled={submitting}
+              type="button"
               className="navigation-button btn-gradient"
+              onClick={
+                goNext
+              }
             >
-              Continue
 
-              <i className="bi bi-arrow-right ms-2" />
+              Next
+
+              <i className="bi bi-arrow-right ms-1"></i>
+
             </Button>
+
           ) : (
+
             <Button
-              type="submit"
               color="success"
-              disabled={submitting}
+              type="button"
               className="navigation-button"
+              disabled={loading}
+              onClick={() => {
+
+                const form =
+                  document.querySelector(
+                    "form"
+                  );
+
+                if (form) {
+                  form.requestSubmit();
+                }
+
+              }}
             >
-              {submitting ? (
+
+              {loading ? (
                 <>
                   <Spinner
                     size="sm"
-                    className="me-2"
+                    className="me-1"
                   />
 
                   Saving...
                 </>
               ) : (
                 <>
-                  <i className="bi bi-check-lg me-2" />
+                  <i className="bi bi-check-lg me-1"></i>
 
                   {courseId
                     ? "Update Course"
                     : "Create Course"}
                 </>
               )}
+
             </Button>
+
           )}
 
         </div>
 
-      </Form>
+      </div>
 
-      {/* Page Styles */}
-      <style>{`
 
-        /* =========================================
-           PAGE
-        ========================================= */
+      {/* ==========================================================
+          SAVING OVERLAY
+      ========================================================== */}
 
-        .course-form-page {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 20px 16px 40px;
-          color: #1f2937;
-        }
+      {loading &&
+        !courseId && (
 
-        .course-page-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 24px;
-        }
+          <div className="course-overlay">
 
-        .page-title {
-          font-size: 26px;
-          font-weight: 700;
-          color: #111827;
-        }
+            <div className="saving-box">
 
-        .back-button {
-          width: 36px;
-          height: 36px;
-          border: 1px solid #e5e7eb;
-          background: #fff;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: 0.2s;
-        }
+              <Spinner />
 
-        .back-button:hover {
-          background: #f3f4f6;
-        }
+              <h5 className="mt-3 mb-1">
+                Creating Course
+              </h5>
 
-        /* =========================================
-           STEPS
-        ========================================= */
+              <p className="text-muted mb-0">
+                Please wait while your course is being saved.
+              </p>
 
-        .step-card {
-          background: #fff;
-          border: 1px solid #e5e7eb;
-          border-radius: 14px;
-          padding: 18px 20px 14px;
-          margin-bottom: 20px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
+            </div>
 
-        .step-progress {
-          height: 4px;
-          background: #edf0f4;
-          border-radius: 20px;
-          overflow: hidden;
-          margin-bottom: 18px;
-        }
+          </div>
 
-        .step-progress-bar {
-          height: 100%;
-          background: #0d6efd;
-          border-radius: 20px;
-          transition: width 0.3s ease;
-        }
+        )}
 
-        .steps {
-          display: flex;
-          justify-content: space-between;
-          gap: 10px;
-        }
-
-        .step {
-          border: 0;
-          background: transparent;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          text-align: left;
-          padding: 4px;
-          cursor: pointer;
-          color: #9ca3af;
-        }
-
-        .step-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: #f3f4f6;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          font-size: 16px;
-          transition: 0.2s;
-        }
-
-        .step-content {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .step-content small {
-          font-size: 11px;
-        }
-
-        .step-content strong {
-          font-size: 14px;
-        }
-
-        .step.active {
-          color: #0d6efd;
-        }
-
-        .step.active .step-icon {
-          background: #0d6efd;
-          color: #fff;
-        }
-
-        .step.completed {
-          color: #198754;
-        }
-
-        .step.completed .step-icon {
-          background: #d1fae5;
-          color: #198754;
-        }
-
-        /* =========================================
-           FORM CARD
-        ========================================= */
-
-        .form-card {
-          background: #fff;
-          border: 1px solid #e5e7eb;
-          border-radius: 14px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-          overflow: hidden;
-        }
-
-        .form-section {
-          padding: 30px;
-        }
-
-        .section-header {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-        }
-
-        .section-number {
-          width: 42px;
-          height: 42px;
-          border-radius: 10px;
-          background: #eff6ff;
-          color: #0d6efd;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 13px;
-          flex-shrink: 0;
-        }
-
-        .section-header h4 {
-          font-size: 20px;
-          font-weight: 700;
-        }
-
-        .section-header-row {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 20px;
-          margin-bottom: 25px;
-        }
-
-        /* =========================================
-           FORM ELEMENTS
-        ========================================= */
-
-        .form-label-custom {
-          font-weight: 600;
-          font-size: 14px;
-          margin-bottom: 8px;
-          color: #374151;
-        }
-
-        .form-control,
-        .form-select {
-          border-color: #dfe3e8;
-          border-radius: 8px;
-          min-height: 42px;
-          box-shadow: none !important;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-          border-color: #86b7fe;
-        }
-
-        .form-help {
-          display: block;
-          margin-top: 6px;
-          font-size: 12px;
-          color: #9ca3af;
-        }
-
-        .rich-editor {
-          border-radius: 8px;
-          overflow: hidden;
-        }
-
-        .rich-editor .ql-toolbar {
-          border-color: #dfe3e8;
-          background: #f8fafc;
-        }
-
-        .rich-editor .ql-container {
-          border-color: #dfe3e8;
-          min-height: 140px;
-          font-size: 14px;
-        }
-
-        .rich-editor .ql-editor {
-          min-height: 140px;
-        }
-
-        /* =========================================
-           IMAGE
-        ========================================= */
-
-        .image-section {
-          margin-top: 10px;
-          padding: 20px;
-          border: 1px solid #e5e7eb;
-          background: #fafbfc;
-          border-radius: 12px;
-        }
-
-        .image-section-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 18px;
-        }
-
-        .image-section-header h5 {
-          font-size: 16px;
-          font-weight: 650;
-        }
-
-        .course-image-preview,
-        .course-image-placeholder {
-          height: 120px;
-          width: 100%;
-          border-radius: 10px;
-          border: 1px dashed #d1d5db;
-          overflow: hidden;
-          background: #fff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .course-image-preview img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
-
-        .course-image-placeholder {
-          flex-direction: column;
-          color: #9ca3af;
-          gap: 5px;
-        }
-
-        .course-image-placeholder i {
-          font-size: 28px;
-        }
-
-        /* =========================================
-           DYNAMIC CARDS
-        ========================================= */
-
-        .dynamic-card {
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          overflow: hidden;
-          background: #fff;
-        }
-
-        .dynamic-card-header {
-          padding: 16px 18px;
-          background: #f8fafc;
-          border-bottom: 1px solid #e5e7eb;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .dynamic-card-body {
-          padding: 20px;
-        }
-
-        .item-number {
-          width: 36px;
-          height: 36px;
-          border-radius: 9px;
-          background: #e8f1ff;
-          color: #0d6efd;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          flex-shrink: 0;
-        }
-
-        .delete-button {
-          width: 34px;
-          height: 34px;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid #e5e7eb;
-        }
-
-        .add-button {
-          white-space: nowrap;
-        }
-
-        .empty-add-box {
-          border: 1px dashed #cbd5e1;
-          border-radius: 12px;
-          padding: 18px;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          margin-top: 10px;
-        }
-
-        .empty-add-box > i {
-          font-size: 24px;
-          color: #0d6efd;
-        }
-
-        .empty-add-box div {
-          flex: 1;
-        }
-
-        /* =========================================
-           MATERIALS
-        ========================================= */
-
-        .subject-material-section {
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          margin-bottom: 22px;
-          overflow: hidden;
-        }
-
-        .material-subject-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 16px 18px;
-          background: #f8fafc;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .subject-heading-icon {
-          width: 40px;
-          height: 40px;
-          background: #eff6ff;
-          color: #0d6efd;
-          border-radius: 9px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .materials-grid {
-          padding: 18px;
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 18px;
-        }
-
-        .material-card {
-          border: 1px solid #e5e7eb;
-          border-radius: 10px;
-          overflow: hidden;
-          background: #fff;
-        }
-
-        .material-header {
-          padding: 13px 14px;
-          background: #fafafa;
-          border-bottom: 1px solid #e5e7eb;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .material-icon {
-          width: 34px;
-          height: 34px;
-          border-radius: 8px;
-          background: #f3f4f6;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #6b7280;
-        }
-
-        .material-body {
-          padding: 18px;
-        }
-
-        /* =========================================
-           NAVIGATION
-        ========================================= */
-
-        .form-navigation {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-top: 20px;
-          padding: 16px 20px;
-          background: #fff;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-        }
-
-        .navigation-button {
-          min-width: 125px;
-        }
-
-        .navigation-step {
-          font-size: 13px;
-          color: #6b7280;
-          font-weight: 600;
-        }
-
-        /* =========================================
-           LOADING
-        ========================================= */
-
-        .course-loading {
-          min-height: 400px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-        }
-
-        .course-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(255,255,255,0.85);
-          backdrop-filter: blur(3px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-        }
-
-        .saving-box {
-          background: #fff;
-          border: 1px solid #e5e7eb;
-          border-radius: 14px;
-          padding: 30px 40px;
-          text-align: center;
-          box-shadow: 0 10px 35px rgba(0,0,0,0.12);
-        }
-
-        /* =========================================
-           TABLET
-        ========================================= */
-
-        @media (max-width: 991px) {
-
-          .materials-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .form-section {
-            padding: 24px;
-          }
-
-        }
-
-        /* =========================================
-           MOBILE
-        ========================================= */
-
-        @media (max-width: 767px) {
-
-          .course-form-page {
-            padding: 12px 10px 90px;
-          }
-
-          .page-title {
-            font-size: 21px;
-          }
-
-          .course-page-header {
-            margin-bottom: 16px;
-          }
-
-          .step-card {
-            padding: 14px 10px;
-          }
-
-          .steps {
-            gap: 3px;
-          }
-
-          .step {
-            flex-direction: column;
-            justify-content: center;
-            text-align: center;
-            flex: 1;
-          }
-
-          .step-icon {
-            width: 36px;
-            height: 36px;
-          }
-
-          .step-content small {
-            font-size: 10px;
-          }
-
-          .step-content strong {
-            font-size: 11px;
-          }
-
-          .form-section {
-            padding: 18px 14px;
-          }
-
-          .section-header h4 {
-            font-size: 18px;
-          }
-
-          .section-header-row {
-            flex-direction: column;
-          }
-
-          .section-header-row .add-button {
-            width: 100%;
-          }
-
-          .dynamic-card-body {
-            padding: 16px;
-          }
-
-          .dynamic-card-header {
-            padding: 13px;
-          }
-
-          .empty-add-box {
-            flex-wrap: wrap;
-          }
-
-          .empty-add-box button {
-            width: 100%;
-          }
-
-          .material-subject-header {
-            padding: 13px;
-          }
-
-          .materials-grid {
-            padding: 12px;
-            gap: 12px;
-          }
-
-          .material-body {
-            padding: 14px;
-          }
-
-          .form-navigation {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            border-radius: 0;
-            margin: 0;
-            padding: 10px 12px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
-          }
-
-          .navigation-button {
-            min-width: 105px;
-          }
-
-          .navigation-step {
-            font-size: 12px;
-          }
-
-          .image-section {
-            padding: 15px;
-          }
-
-        }
-
-        @media (max-width: 400px) {
-
-          .navigation-button {
-            min-width: auto;
-            padding-left: 12px;
-            padding-right: 12px;
-          }
-
-          .navigation-step {
-            display: none;
-          }
-
-          .step-content strong {
-            font-size: 10px;
-          }
-
-        }
-
-      `}</style>
     </div>
   );
 };
+
 
 export default CourseForm;

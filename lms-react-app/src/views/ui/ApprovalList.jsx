@@ -1,43 +1,72 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuthcontext } from "../../contexts/Authcontext";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCheck,
+  faClock,
+  faSearch,
+  faUserCheck,
+  faUsers,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
+
 const ApprovalManagement = () => {
+  const { authUser } = useAuthcontext();
+
   const [allRequests, setAllRequests] = useState([]);
-  const [filteredRequests, setFilteredRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [usernameFilter, setUsernameFilter] = useState("");
   const [courseFilter, setCourseFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const { authUser } = useAuthcontext();
+
+  const [actionLoading, setActionLoading] = useState(null);
+
+  // =========================================================
+  // FETCH COURSES AND JOIN REQUESTS
+  // =========================================================
 
   useEffect(() => {
     const fetchCourses = async () => {
+      if (!authUser?.user?._id) {
+        return;
+      }
+
       try {
+        setLoading(true);
+
         const response = await axios.get("/api/courses/");
+        console.log("Fetched courses:", response.data);
+
         const courses = response.data.filter(
-          (e) => e.created_by === authUser?.user?._id
-        );
+            (course) =>
+              course?.created_by?._id == authUser?.user?._id
+            );
+        console.log("Fetched filtered courses:", courses);
 
         const requests = courses.flatMap((course) =>
           (course.joinRequests || []).map((req) => ({
             id: `${course._id}_${req.user?._id || "unknown"}`,
             user: req.user,
             status: req.status,
-            course: course.name,
+            course: course.name || course.title,
             courseId: course._id,
           }))
         );
 
         setAllRequests(requests);
-        setFilteredRequests(requests);
       } catch (error) {
-        console.error("Error fetching courses:", error);
+        console.error(
+          "Error fetching courses:",
+          error
+        );
+
         toast.error(
           error.response?.data?.message ||
-            "Error fetching courses. Please try again."
+            "Error fetching course requests. Please try again."
         );
       } finally {
         setLoading(false);
@@ -45,56 +74,106 @@ const ApprovalManagement = () => {
     };
 
     fetchCourses();
-  }, [authUser]);
+  }, [authUser?.user?._id]);
 
-  useEffect(() => {
-    const filtered = allRequests.filter((req) => {
-      const username = req.user?.username?.toLowerCase() || "";
-      const course = req.course?.toLowerCase() || "";
-      const status = req.status?.toLowerCase() || "";
+  // =========================================================
+  // FILTER REQUESTS
+  // =========================================================
 
-      const usernameMatch = username.includes(usernameFilter.toLowerCase());
-      const courseMatch = course.includes(courseFilter.toLowerCase());
+  const filteredRequests = useMemo(() => {
+    const usernameQuery =
+      usernameFilter.toLowerCase().trim();
+
+    const courseQuery =
+      courseFilter.toLowerCase().trim();
+
+    const statusQuery =
+      statusFilter.toLowerCase().trim();
+
+    return allRequests.filter((req) => {
+      const username =
+        req.user?.username?.toLowerCase() || "";
+
+      const fullname =
+        req.user?.fullname?.toLowerCase() || "";
+
+      const email =
+        req.user?.email?.toLowerCase() || "";
+
+      const course =
+        req.course?.toLowerCase() || "";
+
+      const status =
+        req.status?.toLowerCase() || "";
+
+      const usernameMatch =
+        !usernameQuery ||
+        username.includes(usernameQuery) ||
+        fullname.includes(usernameQuery) ||
+        email.includes(usernameQuery);
+
+      const courseMatch =
+        !courseQuery ||
+        course.includes(courseQuery);
+
       const statusMatch =
-        !statusFilter || statusFilter.toLowerCase() === "all"
-          ? true
-          : status.includes(statusFilter.toLowerCase());
+        !statusQuery ||
+        statusQuery === "all" ||
+        status === statusQuery;
 
-      return usernameMatch && courseMatch && statusMatch;
+      return (
+        usernameMatch &&
+        courseMatch &&
+        statusMatch
+      );
     });
+  }, [
+    allRequests,
+    usernameFilter,
+    courseFilter,
+    statusFilter,
+  ]);
 
-    setFilteredRequests(filtered);
-  }, [usernameFilter, courseFilter, statusFilter, allRequests]);
+  // =========================================================
+  // COUNTS
+  // =========================================================
 
-  const handleApprove = async (req) => {
-    try {
-      await SendRequest(req.courseId, req.user?._id, "approved");
-      updateRequestStatus(req.id, "approved");
-    } catch (err) {
-      console.error("Error approving request:", err);
-    }
-  };
+  const totalRequests = allRequests.length;
 
-  const handleReject = async (req) => {
-    try {
-      await SendRequest(req.courseId, req.user?._id, "rejected");
-      updateRequestStatus(req.id, "rejected");
-    } catch (err) {
-      console.error("Error rejecting request:", err);
-    }
-  };
+  const pendingRequests = allRequests.filter(
+    (request) =>
+      request.status === "pending"
+  ).length;
 
-  const updateRequestStatus = (id, status) => {
-    setAllRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status } : r))
-    );
-  };
+  const approvedRequests = allRequests.filter(
+    (request) =>
+      request.status === "approved"
+  ).length;
 
-  const SendRequest = async (courseId, userId, action) => {
+  const rejectedRequests = allRequests.filter(
+    (request) =>
+      request.status === "rejected"
+  ).length;
+
+  // =========================================================
+  // UPDATE REQUEST
+  // =========================================================
+
+  const SendRequest = async (
+    courseId,
+    userId,
+    action
+  ) => {
     try {
       if (!courseId || !userId || !action) {
-        throw new Error("Missing courseId, userId, or action");
+        throw new Error(
+          "Missing courseId, userId, or action"
+        );
       }
+
+      setActionLoading(
+        `${courseId}_${userId}`
+      );
 
       const response = await axios.post(
         "/api/courses/handle-join-request",
@@ -110,116 +189,738 @@ const ApprovalManagement = () => {
         }
       );
 
-      toast.success("Request processed successfully");
       return response.data;
     } catch (error) {
-      console.error("SendRequest error:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to process request."
+      console.error(
+        "SendRequest error:",
+        error
       );
+
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to process request."
+      );
+
       throw error;
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  return (
-    <div className="approval-list">
-      <h2 className="list-heading-approval h4">User Course Approvals</h2>
+  // =========================================================
+  // APPROVE
+  // =========================================================
 
-      {loading ? (
-        <p>Loading requests...</p>
-      ) : (
-        <div className="table-container-approval">
-          <table className="approval-table">
+  const handleApprove = async (request) => {
+    try {
+      await SendRequest(
+        request.courseId,
+        request.user?._id,
+        "approved"
+      );
+
+      updateRequestStatus(
+        request.id,
+        "approved"
+      );
+
+      toast.success(
+        "Course request approved successfully"
+      );
+    } catch (error) {
+      console.error(
+        "Error approving request:",
+        error
+      );
+    }
+  };
+
+  // =========================================================
+  // REJECT
+  // =========================================================
+
+  const handleReject = async (request) => {
+    try {
+      await SendRequest(
+        request.courseId,
+        request.user?._id,
+        "rejected"
+      );
+
+      updateRequestStatus(
+        request.id,
+        "rejected"
+      );
+
+      toast.success(
+        "Course request rejected"
+      );
+    } catch (error) {
+      console.error(
+        "Error rejecting request:",
+        error
+      );
+    }
+  };
+
+  // =========================================================
+  // UPDATE LOCAL STATUS
+  // =========================================================
+
+  const updateRequestStatus = (
+    id,
+    status
+  ) => {
+    setAllRequests((prev) =>
+      prev.map((request) =>
+        request.id === id
+          ? {
+              ...request,
+              status,
+            }
+          : request
+      )
+    );
+  };
+
+  // =========================================================
+  // CLEAR FILTERS
+  // =========================================================
+
+  const clearFilters = () => {
+    setUsernameFilter("");
+    setCourseFilter("");
+    setStatusFilter("");
+  };
+
+  const hasFilters =
+    usernameFilter ||
+    courseFilter ||
+    statusFilter;
+
+  // =========================================================
+  // STATUS DISPLAY
+  // =========================================================
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case "approved":
+        return "approved";
+
+      case "rejected":
+        return "rejected";
+
+      case "pending":
+        return "pending";
+
+      default:
+        return "unknown";
+    }
+  };
+
+  const getStatusText = (status) => {
+    if (!status) {
+      return "Unknown";
+    }
+
+    return (
+      status.charAt(0).toUpperCase() +
+      status.slice(1)
+    );
+  };
+
+  // =========================================================
+  // RENDER
+  // =========================================================
+
+  return (
+    <div className="course-approval-page">
+
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
+      <div className="course-approval-header">
+
+        <div className="course-approval-title">
+
+          <div className="course-approval-title-icon">
+            <FontAwesomeIcon
+              icon={faUserCheck}
+            />
+          </div>
+
+          <div>
+            <h2>
+              User Course Approvals
+            </h2>
+
+            <p>
+              Review and manage student
+              course join requests
+            </p>
+          </div>
+
+        </div>
+
+        {/* SEARCH */}
+
+        <div className="course-approval-search">
+
+          <FontAwesomeIcon
+            icon={faSearch}
+          />
+
+          <input
+            type="text"
+            placeholder="Search username, name or email..."
+            value={usernameFilter}
+            onChange={(e) =>
+              setUsernameFilter(
+                e.target.value
+              )
+            }
+          />
+
+        </div>
+
+      </div>
+
+      {/* =====================================================
+          SUMMARY CARDS
+      ===================================================== */}
+
+      <div className="course-approval-summary">
+
+        {/* TOTAL */}
+
+        <div className="course-summary-card">
+
+          <div className="course-summary-icon total">
+            <FontAwesomeIcon
+              icon={faUsers}
+            />
+          </div>
+
+          <div>
+            <span>
+              Total Requests
+            </span>
+
+            <strong>
+              {loading
+                ? "..."
+                : totalRequests}
+            </strong>
+          </div>
+
+        </div>
+
+        {/* PENDING */}
+
+        <div className="course-summary-card">
+
+          <div className="course-summary-icon pending">
+            <FontAwesomeIcon
+              icon={faClock}
+            />
+          </div>
+
+          <div>
+            <span>
+              Pending
+            </span>
+
+            <strong>
+              {loading
+                ? "..."
+                : pendingRequests}
+            </strong>
+          </div>
+
+        </div>
+
+        {/* APPROVED */}
+
+        <div className="course-summary-card">
+
+          <div className="course-summary-icon approved">
+            <FontAwesomeIcon
+              icon={faCheck}
+            />
+          </div>
+
+          <div>
+            <span>
+              Approved
+            </span>
+
+            <strong>
+              {loading
+                ? "..."
+                : approvedRequests}
+            </strong>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* =====================================================
+          MAIN TABLE CARD
+      ===================================================== */}
+
+      <div className="course-approval-card">
+
+        {/* CARD HEADER */}
+
+        <div className="course-approval-card-header">
+
+          <div>
+            <h3>
+              Course Join Requests
+            </h3>
+
+            <p>
+              {filteredRequests.length} request
+              {filteredRequests.length !== 1
+                ? "s"
+                : ""}
+            </p>
+          </div>
+
+          {/* FILTERS */}
+
+          <div className="course-approval-filters">
+
+            <button
+              type="button"
+              className={`course-filter-btn ${
+                !statusFilter
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setStatusFilter("")
+              }
+            >
+              All
+            </button>
+
+            <button
+              type="button"
+              className={`course-filter-btn pending ${
+                statusFilter === "pending"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setStatusFilter("pending")
+              }
+            >
+              Pending
+            </button>
+
+            <button
+              type="button"
+              className={`course-filter-btn approved ${
+                statusFilter === "approved"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setStatusFilter("approved")
+              }
+            >
+              Approved
+            </button>
+
+            <button
+              type="button"
+              className={`course-filter-btn rejected ${
+                statusFilter === "rejected"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setStatusFilter("rejected")
+              }
+            >
+              Rejected
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* =================================================
+            ADDITIONAL FILTER ROW
+        ================================================= */}
+
+        <div className="course-filter-row">
+
+          <div className="course-filter-field">
+
+            <label>
+              Username / Name / Email
+            </label>
+
+            <div className="course-filter-input">
+
+              <FontAwesomeIcon
+                icon={faSearch}
+              />
+
+              <input
+                type="text"
+                placeholder="Filter users..."
+                value={usernameFilter}
+                onChange={(e) =>
+                  setUsernameFilter(
+                    e.target.value
+                  )
+                }
+              />
+
+            </div>
+
+          </div>
+
+          <div className="course-filter-field">
+
+            <label>
+              Course
+            </label>
+
+            <input
+              type="text"
+              className="course-filter-text"
+              placeholder="Filter by course..."
+              value={courseFilter}
+              onChange={(e) =>
+                setCourseFilter(
+                  e.target.value
+                )
+              }
+            />
+
+          </div>
+
+          {hasFilters && (
+            <button
+              type="button"
+              className="course-clear-filter"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+          )}
+
+        </div>
+
+        {/* =================================================
+            TABLE
+        ================================================= */}
+
+        <div className="course-approval-table-wrapper">
+
+          <table className="course-approval-table">
+
             <thead>
+
               <tr>
-                <th>
-                  Username
-                  <input
-                    type="text"
-                    className="filter-input"
-                    placeholder="Filter by username"
-                    value={usernameFilter}
-                    onChange={(e) => setUsernameFilter(e.target.value)}
-                  />
-                </th>
-                <th>
-                  Course
-                  <input
-                    type="text"
-                    className="filter-input"
-                    placeholder="Filter by course"
-                    value={courseFilter}
-                    onChange={(e) => setCourseFilter(e.target.value)}
-                  />
-                </th>
-                <th>
-                  Status
-                  <input
-                    type="text"
-                    className="filter-input"
-                    placeholder="Filter by status"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  />
-                </th>
+                <th>User</th>
+                <th>Course</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
+
             </thead>
+
             <tbody>
-              {filteredRequests.length === 0 ? (
+
+              {/* LOADING */}
+
+              {loading ? (
                 <tr>
-                  <td colSpan="4">No approval requests found.</td>
+
+                  <td
+                    colSpan="4"
+                    className="course-approval-loading"
+                  >
+
+                    <div className="course-approval-loader">
+
+                      <span></span>
+                      <span></span>
+                      <span></span>
+
+                    </div>
+
+                    Loading course requests...
+
+                  </td>
+
+                </tr>
+              ) : filteredRequests.length === 0 ? (
+
+                /* EMPTY */
+
+                <tr>
+
+                  <td
+                    colSpan="4"
+                    className="course-approval-empty"
+                  >
+
+                    <div className="course-approval-empty-icon">
+                      <FontAwesomeIcon
+                        icon={faUserCheck}
+                      />
+                    </div>
+
+                    <h4>
+                      No requests found
+                    </h4>
+
+                    <p>
+                      No course requests match
+                      your current filters.
+                    </p>
+
+                  </td>
+
                 </tr>
               ) : (
-                filteredRequests.map((req) => (
-                  <tr key={req.id}>
-                    <td>{req.user?.username || "Unknown"}</td>
-                    <td>{req.course || "Unknown"}</td>
-                    <td>
-                      <span
-                        className={`status-badge ${
-                          req.status === "pending"
-                            ? "status-pending"
-                            : req.status === "approved"
-                            ? "status-approved"
-                            : req.status === "rejected"
-                            ? "status-rejected"
-                            : "status-unknown"
-                        }`}
+
+                /* DATA */
+
+                filteredRequests.map(
+                  (request) => {
+
+                    const requestKey =
+                      `${request.courseId}_${request.user?._id}`;
+
+                    const isProcessing =
+                      actionLoading ===
+                      requestKey;
+
+                    return (
+                      <tr
+                        key={request.id}
                       >
-                        {req.status
-                          ? req.status.charAt(0).toUpperCase() +
-                            req.status.slice(1)
-                          : "Unknown"}
-                      </span>
-                    </td>
-                    <td>
-                      {req.status === "pending" ? (
-                        <div className="action-buttons">
-                          <button
-                            className="action-button-approve"
-                            onClick={() => handleApprove(req)}
+
+                        {/* USER */}
+
+                        <td>
+
+                          <div className="course-user-info">
+
+                            <div className="course-user-avatar">
+                              {(
+                                request.user
+                                  ?.fullname ||
+                                request.user
+                                  ?.username ||
+                                "U"
+                              )
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+
+                            <div>
+
+                              <strong>
+                                {request.user
+                                  ?.fullname ||
+                                  request.user
+                                    ?.username ||
+                                  "Unknown User"}
+                              </strong>
+
+                              <span>
+                                @
+                                {request.user
+                                  ?.username ||
+                                  "unknown"}
+                              </span>
+
+                            </div>
+
+                          </div>
+
+                        </td>
+
+                        {/* COURSE */}
+
+                        <td>
+
+                          <span className="course-name-badge">
+                            {request.course ||
+                              "Unknown Course"}
+                          </span>
+
+                        </td>
+
+                        {/* STATUS */}
+
+                        <td>
+
+                          <span
+                            className={`course-status ${getStatusClass(
+                              request.status
+                            )}`}
                           >
-                            Approve
-                          </button>
-                          <button
-                            className="action-button-reject"
-                            onClick={() => handleReject(req)}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <em>No actions</em>
-                      )}
-                    </td>
-                  </tr>
-                ))
+
+                            <span className="course-status-dot"></span>
+
+                            {getStatusText(
+                              request.status
+                            )}
+
+                          </span>
+
+                        </td>
+
+                        {/* ACTIONS */}
+
+                        <td>
+
+                          {request.status ===
+                          "pending" ? (
+
+                            <div className="course-approval-actions">
+
+                              <button
+                                type="button"
+                                className="course-action-btn approve"
+                                disabled={
+                                  isProcessing
+                                }
+                                onClick={() =>
+                                  handleApprove(
+                                    request
+                                  )
+                                }
+                              >
+
+                                <FontAwesomeIcon
+                                  icon={faCheck}
+                                />
+
+                                <span>
+                                  {isProcessing
+                                    ? "Processing..."
+                                    : "Approve"}
+                                </span>
+
+                              </button>
+
+                              <button
+                                type="button"
+                                className="course-action-btn reject"
+                                disabled={
+                                  isProcessing
+                                }
+                                onClick={() =>
+                                  handleReject(
+                                    request
+                                  )
+                                }
+                              >
+
+                                <FontAwesomeIcon
+                                  icon={faXmark}
+                                />
+
+                                <span>
+                                  Reject
+                                </span>
+
+                              </button>
+
+                            </div>
+
+                          ) : request.status ===
+                            "approved" ? (
+
+                            <span className="course-approved-label">
+
+                              <button
+                                type="button"
+                                className="course-action-btn reject"
+                                disabled={
+                                  isProcessing
+                                }
+                                onClick={() =>
+                                  handleReject(
+                                    request
+                                  )
+                                }
+                              >
+
+                                <span>
+                                  Reject
+                                </span>
+
+                              </button>
+
+                            </span>
+
+                          ) : request.status ===
+                            "rejected" ? (
+
+                            <span className="course-rejected-label">     
+
+                              <button
+                                type="button"
+                                className="course-action-btn approve"
+                                disabled={
+                                  isProcessing
+                                }
+                                onClick={() =>
+                                  handleApprove(
+                                    request
+                                  )
+                                }
+                              >
+
+                                <FontAwesomeIcon
+                                  icon={faXmark}
+                                />
+
+                                <span>
+                                  Approve
+                                </span>
+
+                              </button>
+
+                            </span>
+
+                          ) : (
+
+                            <span className="course-no-action">
+                              No actions
+                            </span>
+
+                          )}
+
+                        </td>
+
+                      </tr>
+                    );
+                  }
+                )
               )}
+
             </tbody>
+
           </table>
+
         </div>
-      )}
+
+      </div>
+
     </div>
   );
 };

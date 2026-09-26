@@ -70,7 +70,7 @@ const adminCourses = course.filter(c => adminIds.includes(c.created_by));
     // Fetch institution data for editing
     useEffect(() => {
         if (id) {
-            axios.get(`/api/institution/${id}`)
+            axios.get(`/api/institutions/${id}`)
                 .then(res => {
                     const data = res.data;
                     setFormData({
@@ -111,10 +111,10 @@ const adminCourses = course.filter(c => adminIds.includes(c.created_by));
         e.preventDefault();
         try {
             if (id) {
-                await axios.put(`/api/institution/${id}`, formData);
+                await axios.put(`/api/institutions/${id}`, formData);
                 toast.success("Institution updated successfully!");
             } else {
-                await axios.post("/api/institution", formData);
+                await axios.post("/api/institutions", formData);
                 toast.success("Institution created successfully!");
             }
             navigate("/institutions");

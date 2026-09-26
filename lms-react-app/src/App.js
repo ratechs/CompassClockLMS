@@ -64,6 +64,7 @@ const App = () => {
         >
           <Route path="/instructor" element={<Navigate to="/instructor/starter" />} />
           <Route path="/instructor/starter" element={<Starter />} />
+          <Route path="/instructor/dashboard" element={<Starter />} />
           <Route path="/instructor/groups" element={<GroupList />} />
           <Route path="/instructor/create-group" element={<GroupForm />} />
           <Route path="/instructor/edit-group/:id" element={<GroupForm />} />
@@ -115,6 +116,7 @@ const App = () => {
           }
         >
           <Route path="/teacher" element={<Navigate to="/teacher/starter" />} />
+          <Route path ="/teacher/dashboard" element={<TeacherStarter />} />
           <Route path="/teacher/starter" element={<TeacherStarter />} />
           <Route path="/teacher/groups" element={<GroupList />} />
           <Route path="/teacher/create-group" element={<GroupForm />} />

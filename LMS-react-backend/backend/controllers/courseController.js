@@ -4,6 +4,7 @@ import Course from '../models/courseModel.js';
 import Material from '../models/meterialModel.js';
 import Subject from '../models/subjectModel.js';
 import User from '../models/userModel.js';
+import enrollment from "../models/enrollmentModel.js";
 
 // Get all courses (no change needed here)
 export const getAllCourses = async (req, res) => {
@@ -81,7 +82,7 @@ export const deleteCourse = async (req, res) => {
     }
 
     // Capture course details for notification *before* deleting
-    const courseName = course.course_name;
+    const courseName = course.name;
     const courseId = course._id.toString();
 
     // Step 2: Extract subject IDs from the course
@@ -517,29 +518,108 @@ export const getCountofJoinRequestsByCreator = async (req, res) => {
 
     const courses = await Course.find({ created_by: creatorId });
 
-    let totalCount = 0, approvedCount = 0, rejectedCount = 0, pendingCount = 0;
-    courses.forEach(course => {
-      totalCount += course.joinRequests.length;
-      course.joinRequests.forEach(request => {
-        if (request.status === 'approved') {
-          approvedCount++;
-        } else if (request.status === 'rejected') {
-          rejectedCount++;
-        } else if (request.status === 'pending') {
-          pendingCount++;
-        }
-      });
-    });
+    const allJoinRequests = courses.flatMap(course =>
+      course.joinRequests.map(req => ({
+        course: course._id,
+        user: req.user,
+        status: req.status,
+        requestedAt: req.requestedAt
+      }))
+    );
 
-    let data = {
-      total: totalCount,
-      approved: approvedCount,
-      rejected: rejectedCount,
-      pending: pendingCount
-    }
-
-    res.status(200).json(data);
+    res.status(200).json(allJoinRequests);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching join request count', error });
+  }
+};
+
+export const enrollFreeCourse = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.body.userId;
+    const { courseId } = req.body;
+
+    if (!userId || !courseId) {
+      return res.status(400).json({
+        message: 'userId and courseId are required'
+      });
+    }
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({
+        message: 'Course not found'
+      });
+    }
+
+    // -----------------------------
+    // MUST BE FREE
+    // -----------------------------
+
+    if (course.is_paidCourse) {
+      return res.status(400).json({
+        message: 'This is a paid course'
+      });
+    }
+
+    // -----------------------------
+    // PRIVATE COURSE
+    // -----------------------------
+
+    if (course.course_type === 'private') {
+      const joinRequest = course.joinRequests.find(
+        (request) =>
+          request.user &&
+          request.user.toString() === userId.toString()
+      );
+
+      if (!joinRequest || joinRequest.status !== 'approved') {
+        return res.status(403).json({
+          message: 'You must be approved to join this private course'
+        });
+      }
+    }
+
+    // -----------------------------
+    // CHECK EXISTING ENROLLMENT
+    // -----------------------------
+
+    const existingEnrollment =
+      await Enrollment.findOne({
+        user: userId,
+        course: courseId
+      });
+
+    if (existingEnrollment) {
+      return res.status(400).json({
+        message: 'You are already enrolled in this course',
+        enrollment: existingEnrollment
+      });
+    }
+
+    // -----------------------------
+    // CREATE ENROLLMENT
+    // -----------------------------
+
+    const enrollment = await Enrollment.create({
+      user: userId,
+      course: courseId,
+      enrollmentType: 'free',
+      status: 'active',
+      enrolledAt: new Date()
+    });
+
+    return res.status(201).json({
+      message: 'Successfully enrolled in free course',
+      enrollment
+    });
+
+  } catch (error) {
+    console.error('Free enrollment error:', error);
+
+    return res.status(500).json({
+      message: 'Unable to enroll in course',
+      error: error.message
+    });
   }
 };

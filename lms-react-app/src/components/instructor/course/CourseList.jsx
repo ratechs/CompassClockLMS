@@ -166,7 +166,7 @@ const CourseList = () => {
                       className="w-100 btn-gradient"
                     >
                       <i className="bi bi-plus-lg me-1"></i>
-                      Add New
+                      Add
                     </Button>
                   </Link>
 

@@ -4,15 +4,11 @@
       "href": "/teacher/starter",
       "icon": "bi bi-speedometer2"
     },
+
     {
       "title": "Courses",
       "href": "/teacher/courses",
       "icon": "bi bi-book-half"
-    },
-    {
-      "title": "Tests",
-      "href": "/teacher/test",
-      "icon": "bi bi-pen-fill"
     },
     {
       "title": "Students",

@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    phoneNumber: { 
+    phoneNumber: {
       type: Number,
       required: true,
     },
@@ -83,7 +83,7 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     expertise: {
-      type: String, 
+      type: String,
       default: null,
     },
     courses: [{
@@ -95,6 +95,18 @@ const userSchema = new mongoose.Schema(
     approved_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
+    },
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true
+    },
+
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
     }
   },
   { timestamps: true }

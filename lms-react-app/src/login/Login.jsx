@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useLogin } from "../hooks/uselogin";
-import logo from "../assets/images/logos/logo-dark.png";
+import logo from "../assets/images/logos/logo.png";
 
 const Login = () => {
   const [username, setUsername] = useState("");

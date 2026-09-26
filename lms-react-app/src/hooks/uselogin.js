@@ -10,7 +10,7 @@ export const useLogin = () => {
     const login = async (usernameOrEmail, password, lastLogin) => {
         setLoading(true);
         try {
-            const res = await fetch('/api/users/sign_in', {
+            const res = await fetch(`/api/users/sign_in`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -10,8 +10,19 @@
     "icon": "bi bi-journal-bookmark-fill fs-4"
   },
   {
-    "title": "Students",
+    "title": "Users",
     "href": "/instructor/users",
-    "icon": "bi bi-mortarboard-fill fs-4"
+    "icon": "bi bi-people-fill fs-4"
+  },
+  {
+    "title": "Instituions",
+    "href": "/instructor/institution",
+    "icon": "bi bi-buildings-fill fs-4"
+  },
+  {
+    "title": "Approvals",
+    "href": "/instructor/approvals",
+    "icon": "bi bi-shield-fill-check fs-4"
   }
+
 ]

@@ -47,6 +47,6 @@ router.post('/handle-join-request', authenticate, handleJoinRequest);
 
 router.get('/all/Requests', getAllJoinRequests);
 
-router.get('/requestCount/:creatorId', getCountofJoinRequestsByCreator);
+router.get('/requests/:creatorId', getCountofJoinRequestsByCreator);
 
 export default router;

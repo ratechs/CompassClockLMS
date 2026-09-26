@@ -131,7 +131,15 @@ const StudentHeader = () => {
                 <DropdownItem onClick={() => navigate("/profile")}>
                   👤 Profile
                 </DropdownItem>
-                <DropdownItem onClick={() => navigate("/dashboard")}>
+                <DropdownItem
+                  onClick={() =>
+                    navigate(
+                      authUser?.user?.role === "admin"
+                        ? "/instructor/dashboard"
+                        : "/teacher/dashboard"
+                    )
+                  }
+                >
                   📊 Dashboard
                 </DropdownItem>
                 <DropdownItem divider />
