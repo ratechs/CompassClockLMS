@@ -1,103 +1,667 @@
 import React, { useEffect, useState } from "react";
+
 import {
   Card,
   CardBody,
-  CardSubtitle,
   CardTitle,
   Col,
   Row,
+  Button,
 } from "reactstrap";
+
 import {
   RiBookOpenFill,
   RiGraduationCapFill,
+  RiFileTextFill,
   RiTeamFill,
+  RiRefreshLine,
+  RiAddLine,
+  RiArrowRightLine,
+  RiCheckboxCircleFill,
+  RiCloseCircleFill,
+  RiTimeFill,
 } from "react-icons/ri";
-import { useGroup } from "../hooks/Groups/useGroups";
-import { courseListService } from "../service/baseService";
+
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { AuthContext, useAuthcontext } from "../contexts/Authcontext";
+
+import { useAuthcontext } from "../contexts/Authcontext";
 import Courses from "../components/courses/Courses";
 
 const Starter = () => {
-  const { group, loading } = useGroup();
-  const {authUser} = useAuthcontext();
-  const [courses, setCourses] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [teachers, setTeachers] = useState([]);
-  const [admins, setAdmins] = useState([]);
-  const [loadingCourses, setLoadingCourses] = useState(true);
+  const { authUser } = useAuthcontext();
+  const navigate = useNavigate();
 
-  // Fetch all courses
-  const fetchCourses = async () => {
+  // --------------------------------------------------
+  // State
+  // --------------------------------------------------
+
+  const [dashboard, setDashboard] = useState({
+    courseCount: 0,
+    testCount: 0,
+    studentCount: 0,
+    requests: {
+      total: 0,
+      approved: 0,
+      rejected: 0,
+      pending: 0,
+    },
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // --------------------------------------------------
+  // Current user
+  // --------------------------------------------------
+
+  const currentUserId = authUser?.user?._id;
+
+  const teacherName =
+    authUser?.user?.fullname ||
+    authUser?.user?.username ||
+    "Teacher";
+
+  // --------------------------------------------------
+  // Fetch dashboard
+  // --------------------------------------------------
+
+  const fetchDashboardData = async () => {
+    if (!currentUserId) {
+      return;
+    }
+
     try {
-      const response = await courseListService();
-      const currentUserCourse = response.data.filter((c) => c.created_by === authUser?.user?._id)
-      setCourses(currentUserCourse);
+      setLoading(true);
+
+      const response = await axios.get(
+        `/api/users/dashboard/${currentUserId}`
+      );
+
+      if (response.data?.success) {
+        setDashboard(
+          response.data.data || {
+            courseCount: 0,
+            testCount: 0,
+            studentCount: 0,
+            requests: {
+              total: 0,
+              approved: 0,
+              rejected: 0,
+              pending: 0,
+            },
+          }
+        );
+      } else {
+        setDashboard({
+          courseCount: 0,
+          testCount: 0,
+          studentCount: 0,
+          requests: {
+            total: 0,
+            approved: 0,
+            rejected: 0,
+            pending: 0,
+          },
+        });
+      }
     } catch (error) {
-      console.error("Error fetching courses:", error);
+      console.error("Dashboard fetch error:", error);
+
+      const message =
+        error.response?.data?.message ||
+        "Unable to load teacher dashboard";
+
+      toast.error(message);
     } finally {
-      setLoadingCourses(false);
+      setLoading(false);
     }
   };
 
-  // Fetch all users
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get("/api/users");
-      const allUsers = response.data;
-      setUsers(allUsers);
-      // Categorize users
-      setStudents(allUsers.filter(user => user.role === "student" && !user.isAdmin));
-      setTeachers(allUsers.filter(user => user.role === "teacher" && !user.isAdmin));
-      setAdmins(allUsers.filter(user => user.isAdmin));
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      const errorMessage =
-        error.response?.data?.message || "Error fetching users. Please try again.";
-      toast.error(errorMessage);
-    }
-  };
+  // --------------------------------------------------
+  // Initial load
+  // --------------------------------------------------
 
-  // Run on component mount
   useEffect(() => {
-    fetchCourses();
-    fetchUsers();
-  }, []);
+    if (currentUserId) {
+      fetchDashboardData();
+    }
+  }, [currentUserId]);
+
+  // --------------------------------------------------
+  // Refresh
+  // --------------------------------------------------
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+
+      await fetchDashboardData();
+
+      toast.success("Dashboard refreshed");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // --------------------------------------------------
+  // Safe value
+  // --------------------------------------------------
+
+  const getValue = (value) => {
+    if (loading) {
+      return "...";
+    }
+
+    return value ?? 0;
+  };
+
+  // --------------------------------------------------
+  // Render
+  // --------------------------------------------------
 
   return (
-    <div>
-      <Row className="cg-4 rg-2">
-        {/* Courses Card */}
-        <Col sm="6" lg="3" xl="3" xxl="3">
-          <Card className="shadow border-0 rounded-4 p-3 position-relative overflow-hidden stat-card">
-            <div className="d-flex align-items-center gap-3">
-              <div className="icon-circle bg-light-primary rounded-circle d-flex justify-content-center align-items-center" style={{ width: 60, height: 60 }}>
-                <RiBookOpenFill size={35} color="#000000" />
+    <div className="teacher-dashboard">
+
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
+      <div className="teacher-dashboard-header">
+
+        <div className="teacher-dashboard-header-left">
+
+          <div className="teacher-dashboard-avatar">
+            <RiGraduationCapFill size={30} />
+          </div>
+
+          <div className="teacher-dashboard-heading">
+            <h1>Teacher Dashboard</h1>
+
+            <p>
+              Welcome back,{" "}
+              <strong>{teacherName}</strong>
+            </p>
+          </div>
+
+        </div>
+
+        <Button
+          type="button"
+          className="teacher-refresh-button"
+          onClick={handleRefresh}
+          disabled={refreshing || loading}
+        >
+          <RiRefreshLine
+            size={19}
+            className={
+              refreshing
+                ? "teacher-refresh-icon spinning"
+                : "teacher-refresh-icon"
+            }
+          />
+
+          <span>
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </span>
+        </Button>
+
+      </div>
+
+      {/* =====================================================
+          STATISTICS
+      ===================================================== */}
+
+      <Row className="teacher-stat-row">
+
+        {/* MY COURSES */}
+
+        <Col
+          xs="12"
+          sm="6"
+          lg="3"
+          className="teacher-stat-column"
+        >
+          <Card className="teacher-stat-card">
+            <CardBody>
+
+              <div className="teacher-stat-inner">
+
+                <div className="teacher-stat-icon courses">
+                  <RiBookOpenFill size={28} />
+                </div>
+
+                <div className="teacher-stat-details">
+
+                  <CardTitle tag="div">
+                    My Courses
+                  </CardTitle>
+
+                  <div className="teacher-stat-number">
+                    {getValue(dashboard.courseCount)}
+                  </div>
+
+                  <span>
+                    Courses created by you
+                  </span>
+
+                </div>
+
               </div>
-              <div>
-                <CardTitle tag="h6" className="fw-semibold text-secondary text-uppercase mb-1">
-                  Courses
-                </CardTitle>
-                <h4 className="fw-bold mb-0 text-dark">
-                  {loadingCourses ? (
-                    <span className="text-warning">Loading...</span>
-                  ) : (
-                    <span className="count-text">{courses.length}</span>
-                  )}
-                </h4>
+
+            </CardBody>
+          </Card>
+        </Col>
+
+        {/* STUDENTS */}
+
+        <Col
+          xs="12"
+          sm="6"
+          lg="3"
+          className="teacher-stat-column"
+        >
+          <Card className="teacher-stat-card">
+            <CardBody>
+
+              <div className="teacher-stat-inner">
+
+                <div className="teacher-stat-icon students">
+                  <RiGraduationCapFill size={28} />
+                </div>
+
+                <div className="teacher-stat-details">
+
+                  <CardTitle tag="div">
+                    Students
+                  </CardTitle>
+
+                  <div className="teacher-stat-number">
+                    {getValue(dashboard.studentCount)}
+                  </div>
+
+                  <span>
+                    Unique enrolled students
+                  </span>
+
+                </div>
+
               </div>
-            </div>
+
+            </CardBody>
+          </Card>
+        </Col>
+
+        {/* TESTS */}
+
+        <Col
+          xs="12"
+          sm="6"
+          lg="3"
+          className="teacher-stat-column"
+        >
+          <Card className="teacher-stat-card">
+            <CardBody>
+
+              <div className="teacher-stat-inner">
+
+                <div className="teacher-stat-icon tests">
+                  <RiFileTextFill size={28} />
+                </div>
+
+                <div className="teacher-stat-details">
+
+                  <CardTitle tag="div">
+                    Tests
+                  </CardTitle>
+
+                  <div className="teacher-stat-number">
+                    {getValue(dashboard.testCount)}
+                  </div>
+
+                  <span>
+                    Tests in your courses
+                  </span>
+
+                </div>
+
+              </div>
+
+            </CardBody>
+          </Card>
+        </Col>
+
+        {/* TOTAL REQUESTS */}
+
+        <Col
+          xs="12"
+          sm="6"
+          lg="3"
+          className="teacher-stat-column"
+        >
+          <Card className="teacher-stat-card">
+            <CardBody>
+
+              <div className="teacher-stat-inner">
+
+                <div className="teacher-stat-icon requests">
+                  <RiTeamFill size={28} />
+                </div>
+
+                <div className="teacher-stat-details">
+
+                  <CardTitle tag="div">
+                    Join Requests
+                  </CardTitle>
+
+                  <div className="teacher-stat-number">
+                    {getValue(
+                      dashboard.requests?.total
+                    )}
+                  </div>
+
+                  <span>
+                    Total course requests
+                  </span>
+
+                </div>
+
+              </div>
+
+            </CardBody>
           </Card>
         </Col>
 
       </Row>
-      <Row className="cg-4 rg-2 mt-4">
-        <Col sm="12" lg="12" xl="12" xxl="12">
-          <Courses />
-        </Col>
-      </Row>
+
+      {/* =====================================================
+          REQUEST STATUS
+      ===================================================== */}
+
+      <Card className="teacher-request-card">
+
+        <CardBody>
+
+          <div className="teacher-section-heading">
+
+            <div>
+              <h3>Join Request Status</h3>
+
+              <p>
+                Overview of student requests for your courses
+              </p>
+            </div>
+
+          </div>
+
+          <div className="teacher-request-grid">
+
+            {/* Pending */}
+
+            <div className="teacher-request-item pending">
+
+              <div className="teacher-request-icon">
+                <RiTimeFill size={23} />
+              </div>
+
+              <div className="teacher-request-info">
+
+                <span>Pending</span>
+
+                <strong>
+                  {getValue(
+                    dashboard.requests?.pending
+                  )}
+                </strong>
+
+              </div>
+
+            </div>
+
+            {/* Approved */}
+
+            <div className="teacher-request-item approved">
+
+              <div className="teacher-request-icon">
+                <RiCheckboxCircleFill size={23} />
+              </div>
+
+              <div className="teacher-request-info">
+
+                <span>Approved</span>
+
+                <strong>
+                  {getValue(
+                    dashboard.requests?.approved
+                  )}
+                </strong>
+
+              </div>
+
+            </div>
+
+            {/* Rejected */}
+
+            <div className="teacher-request-item rejected">
+
+              <div className="teacher-request-icon">
+                <RiCloseCircleFill size={23} />
+              </div>
+
+              <div className="teacher-request-info">
+
+                <span>Rejected</span>
+
+                <strong>
+                  {getValue(
+                    dashboard.requests?.rejected
+                  )}
+                </strong>
+
+              </div>
+
+            </div>
+
+            {/* Total */}
+
+            <div className="teacher-request-item total">
+
+              <div className="teacher-request-icon">
+                <RiTeamFill size={23} />
+              </div>
+
+              <div className="teacher-request-info">
+
+                <span>Total</span>
+
+                <strong>
+                  {getValue(
+                    dashboard.requests?.total
+                  )}
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </CardBody>
+
+      </Card>
+
+      {/* =====================================================
+          QUICK ACTIONS
+      ===================================================== */}
+
+      {/* <Card className="teacher-quick-card">
+
+        <CardBody>
+
+          <div className="teacher-section-heading">
+
+            <div>
+              <h3>Quick Actions</h3>
+
+              <p>
+                Manage your teaching activities
+              </p>
+            </div>
+
+          </div>
+
+          <div className="teacher-quick-actions">
+
+            <button
+              type="button"
+              className="teacher-quick-action"
+              onClick={() =>
+                navigate("/teacher/courses/create")
+              }
+            >
+
+              <div className="teacher-quick-action-icon">
+                <RiAddLine size={22} />
+              </div>
+
+              <div className="teacher-quick-action-content">
+
+                <strong>
+                  Create Course
+                </strong>
+
+                <span>
+                  Create a new course
+                </span>
+
+              </div>
+
+              <RiArrowRightLine
+                size={19}
+                className="teacher-action-arrow"
+              />
+
+            </button>
+
+            <button
+              type="button"
+              className="teacher-quick-action"
+              onClick={() =>
+                navigate("/teacher/students")
+              }
+            >
+
+              <div className="teacher-quick-action-icon students">
+                <RiGraduationCapFill size={21} />
+              </div>
+
+              <div className="teacher-quick-action-content">
+
+                <strong>
+                  View Students
+                </strong>
+
+                <span>
+                  Manage your students
+                </span>
+
+              </div>
+
+              <RiArrowRightLine
+                size={19}
+                className="teacher-action-arrow"
+              />
+
+            </button>
+
+            <button
+              type="button"
+              className="teacher-quick-action"
+              onClick={() =>
+                navigate("/teacher/materials")
+              }
+            >
+
+              <div className="teacher-quick-action-icon materials">
+                <RiFileTextFill size={21} />
+              </div>
+
+              <div className="teacher-quick-action-content">
+
+                <strong>
+                  Learning Materials
+                </strong>
+
+                <span>
+                  Manage course materials
+                </span>
+
+              </div>
+
+              <RiArrowRightLine
+                size={19}
+                className="teacher-action-arrow"
+              />
+
+            </button>
+
+          </div>
+
+        </CardBody>
+
+      </Card> */}
+
+      {/* =====================================================
+          MY COURSES
+      ===================================================== */}
+{/* 
+      <Card className="teacher-courses-card">
+
+        <CardBody className="teacher-courses-body">
+
+          <div className="teacher-courses-header">
+
+            <div className="teacher-courses-title">
+
+              <div className="teacher-courses-icon">
+                <RiBookOpenFill size={21} />
+              </div>
+
+              <div>
+                <h3> Courses</h3>
+
+                <p>
+                  Courses created and managed by you
+                </p>
+              </div>
+
+            </div>
+
+            <div className="teacher-course-count">
+
+              {loading
+                ? "Loading..."
+                : `${dashboard.courseCount} ${
+                    dashboard.courseCount === 1
+                      ? "Course"
+                      : "Courses"
+                  }`}
+
+            </div>
+
+          </div>
+
+          <div className="teacher-courses-content">
+            <Courses />
+          </div>
+
+        </CardBody>
+
+      </Card> */}
+
     </div>
   );
 };

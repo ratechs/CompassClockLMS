@@ -20,9 +20,9 @@ router.post('/create-course', async (req, res) => {
       return res.status(400).json({ message: 'Course name, description, duration, and image URL are required.' });
     }
 
-    if (!Array.isArray(courseData.subjects) || courseData.subjects.length === 0) {
-      return res.status(400).json({ message: 'At least one subject is required.' });
-    }
+    // if (!Array.isArray(courseData.subjects) || courseData.subjects.length === 0) {
+    //   return res.status(400).json({ message: 'At least one subject is required.' });
+    // }
 
   
     for (const subject of courseData.subjects) {

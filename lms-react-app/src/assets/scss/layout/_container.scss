@@ -1140,27 +1140,6 @@ $card-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   }
 }
 
-.logo-ring-modern {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 2px solid rgba(108, 92, 231, 0.2);
-  animation: ringSpin 10s linear infinite;
-}
-
-@keyframes ringSpin {
-  0% {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  100% {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
 // ================================================================
 // ERROR ALERT
 // ================================================================
@@ -1492,7 +1471,7 @@ $card-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   gap: 16px;
-  color: rgba(255, 255, 255, 0.2);
+  color: #EE017E;
   font-size: 13px;
   margin: 4px 0;
 
@@ -1501,7 +1480,7 @@ $card-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     content: '';
     flex: 1;
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: $theme-gradient;
   }
 }
 
@@ -1721,7 +1700,7 @@ $card-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 
   .strength-text {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: #EE017E;
     margin-top: 4px;
     display: block;
   }

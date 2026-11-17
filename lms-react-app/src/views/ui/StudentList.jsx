@@ -17,7 +17,7 @@ import { orderBy } from 'lodash';
 const StudentList = () => {
   const { id: institutionId } = useParams(); // Institution ID from URL
   const navigate = useNavigate();
-  
+
   const [studentsData, setStudentsData] = useState([]);
   const [studentsCount, setStudentCount] = useState(0);
   const [institutionDetails, setInstitutionDetails] = useState([]);
@@ -68,7 +68,7 @@ const StudentList = () => {
     }
   }, [institutionId]);
 
-  useEffect(() =>{
+  useEffect(() => {
     const instDetails = studentsData[0]?.school_info
     setInstitutionDetails(instDetails)
   }, [studentsData])
@@ -92,7 +92,7 @@ const StudentList = () => {
     if (!Array.isArray(studentsData) || studentsData.length === 0) {
       return [];
     }
-  
+
     return studentsData.filter((student) => {
       // Search filters
       const matchesSearch =
@@ -114,7 +114,7 @@ const StudentList = () => {
             .includes(filters.father_name.toLowerCase())) &&
         (!filters.status ||
           student.status?.toLowerCase().includes(filters.status.toLowerCase()))
-  
+
       return matchesSearch;
     });
   }, [studentsData, filters]);
@@ -195,98 +195,192 @@ const StudentList = () => {
 
   return (
     <div className="student-list-container">
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="list-heading-user h4 mb-0">
-          <FontAwesomeIcon icon={faUserGraduate} className="me-2" />
-          Student List
-          <span className="badge bg-primary ms-2">
-            {studentsData.length} Students
-          </span>
-        </h2>
-        <div className="">
-          <button
-            className="btn btn-primary mx-1"
-            onClick={() => navigate(`/teacher/students/add`)}
-          >
-            + Add Student
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate(`/instructor/institutions/${institutionId}/students/upload`)}
-          >
-            + Upload Student
-          </button>
+
+      {/* =====================================================
+        PAGE HEADER
+    ===================================================== */}
+
+      <div className="student-page-header">
+
+        <div className="student-page-title">
+
+          <div className="student-title-icon">
+            <FontAwesomeIcon icon={faUserGraduate} />
+          </div>
+
+          <div>
+            <h2>Student List</h2>
+
+            <p>
+              Manage and view students enrolled in this institution.
+            </p>
+          </div>
+
         </div>
+
+        <div className="student-header-count">
+          <FontAwesomeIcon icon={faUserGraduate} />
+          <span>{studentsData.length}</span>
+          <small>Students</small>
+        </div>
+
       </div>
 
-      {/* Institution Info */}
-      <div className="alert alert-info py-2 mb-3">
-        <small>
-          <strong>Institution:</strong> {institutionDetails?.name?.name} | 
-          <strong> Total Students:</strong> {studentsCount}
-        </small>
+
+      {/* =====================================================
+        INSTITUTION INFORMATION
+    ===================================================== */}
+
+      <div className="institution-info-card">
+
+        <div className="institution-info-icon">
+          <FontAwesomeIcon icon={faUserGraduate} />
+        </div>
+
+        <div className="institution-info-content">
+
+          <span>Institution</span>
+
+          <h4>
+            {institutionDetails?.name?.name || "Institution"}
+          </h4>
+
+        </div>
+
+        <div className="institution-total">
+
+          <span>Total Students</span>
+
+          <strong>
+            {studentsCount}
+          </strong>
+
+        </div>
+
       </div>
 
-      {/* Filter Bar */}
-      <div className="filter-bar mb-3">
-        <div className="row g-2">
-          <div className="col-md-2 col-6">
+
+      {/* =====================================================
+        FILTER SECTION
+    ===================================================== */}
+
+      <div className="student-filter-card">
+
+        <div className="student-filter-header">
+
+          <div className="student-filter-title">
+
+            <div className="filter-icon">
+              <FontAwesomeIcon icon={faEye} />
+            </div>
+
+            <div>
+              <h5>Student Filters</h5>
+              <span>
+                Find students quickly using the filters below
+              </span>
+            </div>
+
+          </div>
+
+          <div className="filter-result-count">
+            {filteredStudents.length} Results
+          </div>
+
+        </div>
+
+
+        <div className="student-filter-grid">
+
+          {/* Student ID */}
+          <div className="student-filter-field">
+
+            <label>Student ID</label>
+
             <input
               type="text"
               name="student_id"
-              placeholder="Student ID"
+              placeholder="Search student ID"
               value={filters.student_id}
               onChange={handleFilterChange}
-              className="form-control form-control-sm"
             />
+
           </div>
-          <div className="col-md-2 col-6">
+
+
+          {/* Name */}
+          <div className="student-filter-field">
+
+            <label>Student Name</label>
+
             <input
               type="text"
               name="full_name"
-              placeholder="Name"
+              placeholder="Search name"
               value={filters.full_name}
               onChange={handleFilterChange}
-              className="form-control form-control-sm"
             />
+
           </div>
-          <div className="col-md-2 col-6">
+
+
+          {/* Class */}
+          <div className="student-filter-field">
+
+            <label>Class</label>
+
             <input
               type="text"
               name="class"
-              placeholder="Class"
+              placeholder="Search class"
               value={filters.class}
               onChange={handleFilterChange}
-              className="form-control form-control-sm"
             />
+
           </div>
-          <div className="col-md-2 col-6">
+
+
+          {/* Section */}
+          <div className="student-filter-field">
+
+            <label>Section</label>
+
             <input
               type="text"
               name="section"
-              placeholder="Section"
+              placeholder="Search section"
               value={filters.section}
               onChange={handleFilterChange}
-              className="form-control form-control-sm"
             />
+
           </div>
-          <div className="col-md-2 col-6">
+
+
+          {/* Father */}
+          <div className="student-filter-field">
+
+            <label>Father Name</label>
+
             <input
               type="text"
               name="father_name"
-              placeholder="Father Name"
+              placeholder="Search father name"
               value={filters.father_name}
               onChange={handleFilterChange}
-              className="form-control form-control-sm"
             />
+
           </div>
-          <div className="col-md-2 col-6">
+
+
+          {/* Status */}
+          <div className="student-filter-field">
+
+            <label>Status</label>
+
             <select
               name="status"
               value={filters.status}
               onChange={handleFilterChange}
-              className="form-select form-select-sm"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
@@ -295,146 +389,455 @@ const StudentList = () => {
               <option value="graduated">Graduated</option>
               <option value="suspended">Suspended</option>
             </select>
+
           </div>
+
         </div>
+
       </div>
 
-      {/* Table */}
-      <div className="table-container-user">
-        <table className="user-table-user">
-          <thead className="table-header-user">
-            <tr>
-              <th className="header-cell-user">Student ID</th>
-              <th className="header-cell-user">Roll Number</th>
-              <th className="header-cell-user">Name</th>
-              <th className="header-cell-user">Class</th>
-              <th className="header-cell-user">Father Name</th>
-              <th className="header-cell-user">Parent Contact</th>
-              <th className="header-cell-user">Status</th>
-              <th className="header-cell-user">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="table-body-user">
-            {paginatedStudents.length > 0 ? (
-              paginatedStudents.map((student) => (
-                <tr key={student._id || student.student_id} className="row-user">
-                  <td className="cell-user">
-                    <span className="fw-semibold">{student.student_id}</span>
-                  </td>
-                  
-                  <td className="cell-user">
-                    <span
-                      className={`badge text-dark`}
-                    >
-                      {student.roll_number}
-                    </span>
-                  </td>
-                  <td className="cell-user text-capitalize">
-                    {student.full_name}
-                  </td>
-                  <td className="cell-user text-capitalize"><span className="badge text-dark">
-                  {student.class} - {student.section.toUpperCase()}</span></td>
-                  <td className="cell-user text-capitalize">
-                    {student.parent_info?.father?.name || "-"}
-                  </td>
-                  <td className="cell-user text-capitalize">
-                    {student.parent_info?.father?.contact || "-"} <br />
-                    {student.parent_info?.mother?.contact || "-"}
-                  </td>
-                  <td className="cell-user">
-                    <span
-                      className={`status-badge-user ${
-                        student.status === "active" ? "active" : "blocked"
-                      } text-capitalize`}
-                    >
-                      {student.status || "Active"}
-                    </span>
-                  </td>
-                  <td className="cell-user actions-cell-user text-nowrap">
-                    <button
-                      onClick={() => viewStudent(student)}
-                      className="action-button-user text-primary"
-                      title="View"
-                    >
-                      <FontAwesomeIcon icon={faEye} />
-                    </button>
-                    <button
-                      onClick={() => editStudent(student)}
-                      className="action-button-user edit-user"
-                      title="Edit"
-                    >
-                      <FontAwesomeIcon icon={faEdit} />
-                    </button>
-                    <button
-                      onClick={() =>
-                        updateStatus(
-                          student,
-                          student.status === "active" ? "inactive" : "active"
-                        )
-                      }
-                      className={`action-button-user ${
-                        student.status === "active" ? "block-user" : "unblock-user"
-                      }`}
-                      title={student.status === "active" ? "Deactivate" : "Activate"}
-                    >
-                      <FontAwesomeIcon
-                        icon={student.status === "active" ? faBan : faTrophy}
-                      />
-                    </button>
-                    <button
-                      onClick={() => deleteStudent(student)}
-                      className="action-button-user block-trash"
-                      title="Delete"
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr className="row-user empty-row-user">
-                <td className="cell-user empty-cell-user" colSpan="8">
-                  <div className="py-4">
-                    <FontAwesomeIcon icon={faUserGraduate} className="fa-2x text-muted mb-2" />
-                    <p className="mb-0">No students found in this institution.</p>
-                    <small className="text-muted">Try adjusting your filters.</small>
-                  </div>
-                </td>
+
+      {/* =====================================================
+        STUDENT TABLE
+    ===================================================== */}
+
+      <div className="student-table-card">
+
+        <div className="student-table-header">
+
+          <div>
+            <h5>Students</h5>
+
+            <span>
+              Showing {paginatedStudents.length} of{" "}
+              {filteredStudents.length} students
+            </span>
+          </div>
+
+          <div className="student-table-badge">
+            {filteredStudents.length}
+          </div>
+
+        </div>
+
+
+        <div className="table-container-user">
+
+          <table className="user-table-user">
+
+            <thead className="table-header-user">
+
+              <tr>
+
+                <th className="header-cell-user">
+                  Student
+                </th>
+
+                <th className="header-cell-user">
+                  Roll Number
+                </th>
+
+                <th className="header-cell-user">
+                  Class
+                </th>
+
+                <th className="header-cell-user">
+                  Parent
+                </th>
+
+                <th className="header-cell-user">
+                  Contact
+                </th>
+
+                <th className="header-cell-user">
+                  Status
+                </th>
+
+                <th className="header-cell-user action-heading">
+                  Actions
+                </th>
+
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
 
-      {/* Pagination */}
-      {pageCount > 1 && (
-        <div className="pagination-user my-3 d-flex justify-content-center align-items-center gap-3">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-            className="pagination-button-user text-dark"
-          >
-            Previous
-          </button>
-          <span className="pagination-info-user">
-            Page {currentPage} of {pageCount}
-          </span>
-          <button
-            disabled={currentPage === pageCount}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            className="pagination-button-user text-dark"
-          >
-            Next
-          </button>
+            </thead>
+
+
+            <tbody className="table-body-user">
+
+              {paginatedStudents.length > 0 ? (
+
+                paginatedStudents.map((student) => (
+
+                  <tr
+                    key={
+                      student._id ||
+                      student.student_id
+                    }
+                    className="row-user"
+                  >
+
+                    {/* ======================================
+                      STUDENT
+                  ====================================== */}
+
+                    <td className="cell-user">
+
+                      <div className="student-profile">
+
+                        <div className="student-avatar">
+
+                          {student.full_name
+                            ?.charAt(0)
+                            ?.toUpperCase() || "S"}
+
+                        </div>
+
+                        <div className="student-profile-info">
+
+                          <strong>
+                            {student.full_name || "-"}
+                          </strong>
+
+                          <span>
+                            ID: {student.student_id || "-"}
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                    </td>
+
+
+                    {/* ======================================
+                      ROLL NUMBER
+                  ====================================== */}
+
+                    <td className="cell-user">
+
+                      <span className="roll-number-badge">
+                        {student.roll_number || "-"}
+                      </span>
+
+                    </td>
+
+
+                    {/* ======================================
+                      CLASS
+                  ====================================== */}
+
+                    <td className="cell-user">
+
+                      <div className="class-section">
+
+                        <strong>
+                          {student.class || "-"}
+                        </strong>
+
+                        <span>
+                          Section{" "}
+                          {student.section
+                            ?.toUpperCase() || "-"}
+                        </span>
+
+                      </div>
+
+                    </td>
+
+
+                    {/* ======================================
+                      PARENT
+                  ====================================== */}
+
+                    <td className="cell-user">
+
+                      <div className="parent-info">
+
+                        <strong>
+                          {student.parent_info?.father?.name ||
+                            "-"}
+                        </strong>
+
+                        <span>
+                          Father
+                        </span>
+
+                      </div>
+
+                    </td>
+
+
+                    {/* ======================================
+                      CONTACT
+                  ====================================== */}
+
+                    <td className="cell-user">
+
+                      <div className="parent-contact">
+
+                        <span>
+                          {student.parent_info?.father?.contact ||
+                            "-"}
+                        </span>
+
+                        <span>
+                          {student.parent_info?.mother?.contact ||
+                            "-"}
+                        </span>
+
+                      </div>
+
+                    </td>
+
+
+                    {/* ======================================
+                      STATUS
+                  ====================================== */}
+
+                    <td className="cell-user">
+
+                      <span
+                        className={`status-badge-user ${student.status === "active"
+                            ? "active"
+                            : student.status === "graduated"
+                              ? "graduated"
+                              : student.status === "transferred"
+                                ? "transferred"
+                                : student.status === "suspended"
+                                  ? "suspended"
+                                  : "inactive"
+                          }`}
+                      >
+
+                        <span className="status-dot"></span>
+
+                        {student.status || "Active"}
+
+                      </span>
+
+                    </td>
+
+
+                    {/* ======================================
+                      ACTIONS
+                  ====================================== */}
+
+                    <td className="cell-user">
+
+                      <div className="student-actions">
+
+                        {/* View */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            viewStudent(student)
+                          }
+                          className="student-action view"
+                          title="View Student"
+                        >
+                          <FontAwesomeIcon
+                            icon={faEye}
+                          />
+                        </button>
+
+
+                        {/* Edit */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            editStudent(student)
+                          }
+                          className="student-action edit"
+                          title="Edit Student"
+                        >
+                          <FontAwesomeIcon
+                            icon={faEdit}
+                          />
+                        </button>
+
+
+                        {/* Activate / Deactivate */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateStatus(
+                              student,
+                              student.status === "active"
+                                ? "inactive"
+                                : "active"
+                            )
+                          }
+                          className={`student-action ${student.status === "active"
+                              ? "deactivate"
+                              : "activate"
+                            }`}
+                          title={
+                            student.status === "active"
+                              ? "Deactivate Student"
+                              : "Activate Student"
+                          }
+                        >
+
+                          <FontAwesomeIcon
+                            icon={
+                              student.status === "active"
+                                ? faBan
+                                : faTrophy
+                            }
+                          />
+
+                        </button>
+
+
+                        {/* Delete */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteStudent(student)
+                          }
+                          className="student-action delete"
+                          title="Delete Student"
+                        >
+
+                          <FontAwesomeIcon
+                            icon={faTrash}
+                          />
+
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                ))
+
+              ) : (
+
+                <tr className="empty-row-user">
+
+                  <td
+                    colSpan="7"
+                    className="empty-cell-user"
+                  >
+
+                    <div className="student-empty-state">
+
+                      <div className="empty-student-icon">
+                        <FontAwesomeIcon
+                          icon={faUserGraduate}
+                        />
+                      </div>
+
+                      <h5>
+                        No students found
+                      </h5>
+
+                      <p>
+                        No students match the selected
+                        filters.
+                      </p>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              )}
+
+            </tbody>
+
+          </table>
+
         </div>
-      )}
 
-      {/* Count Summary */}
-      <div className="text-muted text-end mt-2">
-        <small>
-          Showing {paginatedStudents.length} of {filteredStudents.length} students
-        </small>
+
+        {/* =================================================
+          PAGINATION
+      ================================================= */}
+
+        {pageCount > 1 && (
+
+          <div className="student-pagination">
+
+            <div className="pagination-summary">
+
+              Showing{" "}
+              <strong>
+                {((currentPage - 1) *
+                  studentsPerPage) +
+                  1}
+              </strong>{" "}
+              -{" "}
+              <strong>
+                {Math.min(
+                  currentPage *
+                  studentsPerPage,
+                  filteredStudents.length
+                )}
+              </strong>{" "}
+              of{" "}
+              <strong>
+                {filteredStudents.length}
+              </strong>
+
+            </div>
+
+
+            <div className="pagination-controls">
+
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() =>
+                  setCurrentPage(
+                    (prev) => prev - 1
+                  )
+                }
+                className="pagination-button-user"
+              >
+                Previous
+              </button>
+
+
+              <div className="pagination-page">
+
+                <strong>
+                  {currentPage}
+                </strong>
+
+                <span>
+                  / {pageCount}
+                </span>
+
+              </div>
+
+
+              <button
+                type="button"
+                disabled={
+                  currentPage === pageCount
+                }
+                onClick={() =>
+                  setCurrentPage(
+                    (prev) => prev + 1
+                  )
+                }
+                className="pagination-button-user"
+              >
+                Next
+              </button>
+
+            </div>
+
+          </div>
+
+        )}
+
       </div>
+
     </div>
   );
 };

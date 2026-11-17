@@ -44,6 +44,17 @@ import InstitutionForm from './views/ui/institutionForm';
 import TeacherApprovals from './views/ui/TeacherApprovals';
 import InsStudentList from './views/ui/StudentList';
 import StudentUpload from './views/ui/excel/upload_page';
+import OrderManagementLayout from 'components/instructor/orders/OrderManagementLayout';
+import Refunds from 'components/instructor/orders/Refunds';
+import Payouts from 'components/instructor/orders/Payouts';
+import Transactions from 'components/instructor/orders/Transactions';
+import Reports from 'components/instructor/orders/Reports';
+import Settings from 'components/instructor/orders/Settings';
+import Orders from 'components/instructor/orders/Orders';
+import AffiliateManagement from 'components/instructor/affiliate/AffiliateDashboard';
+import AffiliateStudents from './views/ui/AffiliateStudents'
+import MyCourseList from './components/students-view/course/MyCourseList';
+import IntrestedUserlist from 'views/ui/IntrestedUserlist';
 
 
 
@@ -64,10 +75,12 @@ const App = () => {
         >
           <Route path="/instructor" element={<Navigate to="/instructor/starter" />} />
           <Route path="/instructor/starter" element={<Starter />} />
+          <Route path="/instructor/dashboard" element={<Starter />} />
           <Route path="/instructor/groups" element={<GroupList />} />
           <Route path="/instructor/create-group" element={<GroupForm />} />
           <Route path="/instructor/edit-group/:id" element={<GroupForm />} />
           <Route path="/instructor/courses" element={<InstructorCourseList />} />
+          <Route path="/instructor/courses/intrested-peoples/:courseId" element={<IntrestedUserlist />} />
           <Route path="/instructor/create-course" element={<CourseForm />} />
           <Route path="/instructor/edit-course/:courseId" element={<CourseForm />} />
           <Route path="/instructor/test/" element={<TestOverview />} />
@@ -86,6 +99,19 @@ const App = () => {
           <Route path="/instructor/institutions/:id/students" element={<InsStudentList />} />
           <Route path="/instructor/institutions/:id/students/upload" element={<StudentUpload />} />
           <Route path="/instructor/teacher-approvals" element={<TeacherApprovals />} />
+
+          {/* Order Management routes */}
+          <Route path="/instructor/order-management" element={<OrderManagementLayout />} />
+          <Route path="/instructor/order-management/refunds" element={<Refunds />} />
+          <Route path="/instructor/order-management/payouts" element={<Payouts />} />
+          <Route path="/instructor/order-management/transactions" element={<Transactions />} />
+          <Route path="/instructor/order-management/reports" element={<Reports />} />
+          <Route path="/instructor/order-management/settings" element={<Settings />} />
+          <Route path="/instructor/order-management/orders" element={<Orders />} />
+
+          {/* Affiliate Management routes */}
+          <Route path="/instructor/affiliate" element={<AffiliateManagement />} />
+
         </Route>
 
         {/* Coordinator routes */}
@@ -115,6 +141,7 @@ const App = () => {
           }
         >
           <Route path="/teacher" element={<Navigate to="/teacher/starter" />} />
+          <Route path ="/teacher/dashboard" element={<TeacherStarter />} />
           <Route path="/teacher/starter" element={<TeacherStarter />} />
           <Route path="/teacher/groups" element={<GroupList />} />
           <Route path="/teacher/create-group" element={<GroupForm />} />
@@ -128,6 +155,9 @@ const App = () => {
           <Route path="/teacher/users" element={<StudentList />} />
           <Route path="/teacher/users/edit/:id" element={<UserForm />} />
           <Route path="/teacher/approvals" element={<ApprovalList />} />
+          {/* Affiliate Management routes */}
+          <Route path="/teacher/affiliate" element={<AffiliateManagement />} />
+          <Route path="/teacher/refferals" element={<AffiliateStudents />} />
         </Route>
 
         {/* Home route for regular users */}
@@ -139,6 +169,7 @@ const App = () => {
         >
           <Route path="/" element={<Navigate to="/home" />} />
           <Route path="/courses" element={<CourseList />} />
+          <Route path="/my-courses" element={<MyCourseList />} />
           <Route path="/profile" element={<StudentProfile />} />
           <Route path="/student-courses" element={<StudentCourseList />} />
           <Route path="/course/details/:id" element={<CourseDetails />} />

@@ -4,15 +4,11 @@
       "href": "/teacher/starter",
       "icon": "bi bi-speedometer2"
     },
+
     {
       "title": "Courses",
       "href": "/teacher/courses",
       "icon": "bi bi-book-half"
-    },
-    {
-      "title": "Tests",
-      "href": "/teacher/test",
-      "icon": "bi bi-pen-fill"
     },
     {
       "title": "Students",
@@ -23,7 +19,22 @@
       "title": "Approvals",
       "href": "/teacher/approvals",
       "icon": "bi bi-shield-fill-check"
-    }
+    },
+    {
+      "title": "Affiliate Dashboard",
+      "href": "/teacher/affiliate",
+      "icon": "bi bi-person-plus-fill"
+    },
+    {
+      "title": "Affiliate Students",
+      "href": "/teacher/refferals",
+      "icon": "bi bi-people"
+    },
+    {
+    "title": "Earnings",
+    "href": "/instructor/earnings",
+    "icon": "bi bi-cash-stack fs-4"
+  }
     
   ] 
   

@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt'
 import generatedTokenAndCookie from '../utils/tokenGenerator.js'
 import mongoose from 'mongoose'
 import User from '../models/userModel.js'
+import { applyReferralToUser } from './affilates/affiliateController.js';
 
 export const saveUsers = async (req, res) => {
 
@@ -51,62 +52,190 @@ export const getUser = async (req, res) => {
 
 export const signUpUser = async (req, res) => {
     try {
-        console.log(req.body)
+        console.log("Signup request:", req.body);
+
         const {
-           fullname, username, password, confirmPassword, isAdmin, email, phoneNumber, schoolClass, institution, otherInstitution,
-            educationLevel, collegeDegree, customCollegeDegree, experience, expertise, profilePicture, preferences, role
+            fullname,
+            username,
+            password,
+            confirmPassword,
+            isAdmin,
+            email,
+            phoneNumber,
+            schoolClass,
+            institution,
+            otherInstitution,
+            educationLevel,
+            collegeDegree,
+            customCollegeDegree,
+            experience,
+            expertise,
+            profilePicture,
+            preferences,
+            role,
+            referralCode
         } = req.body;
 
+
+        // ==========================================
+        // VALIDATE EMAIL
+        // ==========================================
 
         if (!isValidEmail(email)) {
             console.log("Invalid email");
 
-            return res.status(400).json({ message: 'Invalid email format' });
+            return res.status(400).json({
+                message: "Invalid email format"
+            });
         }
 
-        // let groups = [];
-        // if (!isAdmin || isAdmin == null) {
-        //     if(groupIds && Array.isArray(groupIds)){
-        //         // Fetch groups only if the user is not an admin
-        //         groups = await Group.find({ _id: { $in: groupIds } }); // Find all groups by IDs
-        //         if (groups.length !== groupIds.length) {
-        //             return res.status(404).json({ message: 'One or more groups not found' });
-        //         }
-        //     }
-        // }
 
-        // confirm passowrd mismatch
+        // ==========================================
+        // VALIDATE PASSWORD
+        // ==========================================
+
         if (password !== confirmPassword) {
-             console.log("pasword doesnt match");
-            return res.status(400).json({ message: 'Passwords do not match' })
+            console.log("Password doesn't match");
+
+            return res.status(400).json({
+                message: "Passwords do not match"
+            });
         }
 
-        // user already exists
-        const user = await User.findOne({ $or: [{ username }, { email }] })
+
+        // ==========================================
+        // CHECK USER ALREADY EXISTS
+        // ==========================================
+
+        const user = await User.findOne({
+            $or: [
+                { username },
+                { email }
+            ]
+        });
+
         if (user) {
-             console.log("user Exist");
-            return res.status(400).json({ message: 'User already exists' })
+            console.log("User already exists");
+
+            return res.status(400).json({
+                message: "User already exists"
+            });
         }
 
 
-        // hash the password
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(password, salt)
+        // ==========================================
+        // HASH PASSWORD
+        // ==========================================
 
-        const newUser = new User({ fullname, username, email, password: hashedPassword, isAdmin, phoneNumber, schoolClass, institution, educationLevel, collegeDegree, customCollegeDegree, experience, expertise, profilePicture, preferences, role: role })
-        await newUser.save()
+        const salt = await bcrypt.genSalt(10);
 
-        const populatedUser = await User.findById(newUser._id).populate('institution')
+        const hashedPassword = await bcrypt.hash(
+            password,
+            salt
+        );
 
-        if (newUser) {
-            generatedTokenAndCookie(newUser, res)
-            return res.status(201).json({ message: 'User created successfully', user: populatedUser }
-            )
+
+        // ==========================================
+        // CREATE USER
+        // ==========================================
+
+        const newUser = new User({
+            fullname,
+            username,
+            email,
+            password: hashedPassword,
+            isAdmin,
+            phoneNumber,
+            schoolClass,
+            institution,
+            educationLevel,
+            collegeDegree,
+            customCollegeDegree,
+            experience,
+            expertise,
+            profilePicture,
+            preferences,
+            role
+        });
+
+
+        // ==========================================
+        // SAVE USER FIRST
+        // ==========================================
+
+        await newUser.save();
+
+        console.log(
+            "User created successfully:",
+            newUser._id
+        );
+
+
+        // ==========================================
+        // APPLY AFFILIATE REFERRAL
+        // ==========================================
+
+        if (referralCode) {
+            try {
+                await applyReferralToUser(
+                    newUser._id,
+                    referralCode
+                );
+
+                console.log(
+                    "Referral applied successfully:",
+                    referralCode
+                );
+
+            } catch (referralError) {
+                // Referral failure should NOT fail registration
+                console.error(
+                    "Referral processing failed:",
+                    referralError
+                );
+            }
         }
+
+
+        // ==========================================
+        // POPULATE USER
+        // ==========================================
+
+        const populatedUser = await User
+            .findById(newUser._id)
+            .populate("institution");
+
+
+        // ==========================================
+        // GENERATE LOGIN COOKIE
+        // ==========================================
+
+        generatedTokenAndCookie(
+            newUser,
+            res
+        );
+
+
+        // ==========================================
+        // RESPONSE
+        // ==========================================
+
+        return res.status(201).json({
+            message: "User created successfully",
+            user: populatedUser,
+            success: true
+        });
 
     } catch (error) {
-        console.log("the error", error)
-        return res.status(500).json({ error: error.message });
+
+        console.log(
+            "Signup error:",
+            error
+        );
+
+        return res.status(500).json({
+            error: error.message
+        });
     }
 };
 
@@ -575,3 +704,43 @@ export const ApprovingTeacher = async (req, res) => {
     }
 };
 
+
+export const getUserIntrestedCourses = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findById(userId).populate('intrestedCourses');
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json(user.intrestedCourses);
+    } catch (error) {
+        console.error("Error fetching user's interested courses:", error);
+        return res.status(500).json({
+            message: 'Error fetching user\'s interested courses',
+            error: error.message
+        });
+    }
+};
+
+
+export const updateUserIntrestedCourses = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { intrestedCourses } = req.body;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        user.intrestedCourses = intrestedCourses;
+        await user.save();
+        return res.status(200).json(user.intrestedCourses);
+    } catch (error) {
+        console.error("Error updating user's interested courses:", error);
+        return res.status(500).json({
+            message: 'Error updating user\'s interested courses',
+            error: error.message
+        });
+    }
+};

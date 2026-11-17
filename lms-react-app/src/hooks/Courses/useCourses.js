@@ -10,7 +10,7 @@ export const useCourse = () => {
     const fetchCourses = async () => {
         setLoading(true);
         try {
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:2000';
+            const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:2000';
 
             const res = await fetch(`/api/courses`, {
                 method: 'GET',

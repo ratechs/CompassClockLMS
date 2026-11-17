@@ -20,9 +20,9 @@ router.put('/update-course/:courseId', async (req, res) => {
     }
 
     // Step 2: Validate subjects
-    if (!Array.isArray(courseData.subjects) || courseData.subjects.length === 0) {
-      return res.status(400).json({ message: 'At least one subject is required.' });
-    }
+    // if (!Array.isArray(courseData.subjects) || courseData.subjects.length === 0) {
+    //   return res.status(400).json({ message: 'At least one subject is required.' });
+    // }
 
     const updatedSubjects = [];
     

@@ -1,0 +1,9 @@
+{
+  "name": "lms-app",
+  "version": "1.0.0",
+  "main": "LMS-react-backend/server.js",
+  "scripts": {
+    "start": "node LMS-react-backend/server.js"
+  },
+  "dependencies": {}
+}

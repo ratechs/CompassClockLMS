@@ -1,68 +1,216 @@
-import React, { useContext, useState } from 'react'
-import toast from 'react-hot-toast'
-import { useAuthcontext } from '../contexts/Authcontext'
-
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAuthcontext } from "../contexts/Authcontext";
 
 const useSignup = () => {
-  const [loading, setLoading] = useState(false)
-  const {authUser, setAuthUser}= useAuthcontext()
+  const [loading, setLoading] = useState(false);
 
-    const signup = async ({ fullname, email, username, phoneNumber, password, confirmPassword }) => {
-        const success = handleInputErrors({ fullname, email, username, phoneNumber, password, confirmPassword })
+  const { setAuthUser } = useAuthcontext();
 
-        if(!success) return
+  // ============================================================
+  // SIGNUP
+  // ============================================================
 
-        setLoading(true)
+  const signup = async ({
+    fullname,
+    email,
+    username,
+    phoneNumber,
+    role,
+    password,
+    confirmPassword,
+    institution,
 
-        try {
-            const res = await fetch("/api/users/sign_up", {
-                method: 'POST',
-                headers: {
-                      'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ fullname, email, username, phoneNumber, password, confirmPassword })
-            })
+    // ==========================================================
+    // AFFILIATE REFERRAL CODE
+    // ==========================================================
+    referralCode,
+  }) => {
+    // ==========================================================
+    // VALIDATE INPUT
+    // ==========================================================
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Signup failed');
-            }
+    const success = handleInputErrors({
+      fullname,
+      email,
+      username,
+      phoneNumber,
+      role,
+      password,
+      confirmPassword,
+    });
 
-            const data = await res.json()
-            if (data.error){
-                throw new Error(data.error)
-            }
+    if (!success) return false;
 
-            localStorage.setItem('lms-user', JSON.stringify(data))
-            setAuthUser(data)
+    setLoading(true);
 
-        } catch (error) {
-            console.log(error)
-            toast.error(error.message)
-        }finally{
-            setLoading(false)
+    try {
+      // ========================================================
+      // PREPARE SIGNUP DATA
+      // ========================================================
+
+      const signupData = {
+        fullname,
+        email,
+        username,
+        phoneNumber,
+        role,
+        password,
+        confirmPassword,
+        institution,
+
+        // ======================================================
+        // AFFILIATE REFERRAL CODE
+        // ======================================================
+        //
+        // Example:
+        //
+        // referralCode: "RAJOHN1234"
+        //
+        // This will be received by the backend registration
+        // controller.
+        //
+        referralCode: referralCode || null,
+      };
+
+      console.log(
+        "Signup request:",
+        signupData
+      );
+
+      // ========================================================
+      // SIGNUP API
+      // ========================================================
+
+      const res = await fetch(
+        "/api/users/sign_up",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(signupData),
         }
+      );
+
+      // ========================================================
+      // HANDLE HTTP ERROR
+      // ========================================================
+
+      if (!res.ok) {
+        const errorData = await res.json();
+
+        throw new Error(
+          errorData.message ||
+          "Signup failed"
+        );
+      }
+
+      // ========================================================
+      // GET RESPONSE
+      // ========================================================
+
+      const data = await res.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // ========================================================
+      // SAVE USER
+      // ========================================================
+
+      localStorage.setItem(
+        "lms-user",
+        JSON.stringify(data)
+      );
+
+      setAuthUser(data);
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      return true;
+
+    } catch (error) {
+
+      console.log(
+        "The signup error:",
+        error
+      );
+
+      toast.error(
+        error.message
+      );
+
+      return false;
+
+    } finally {
+      setLoading(false);
     }
-    return { loading, signup }
-}
+  };
 
-export default useSignup
+  return {
+    loading,
+    signup,
+  };
+};
 
-function handleInputErrors({ fullname, email, username, phoneNumber,password, confirmPassword }){
-    if(!email || !username || !password || !confirmPassword){
-        toast.error('Please fill all the feilds')
-        return false
-    }
+export default useSignup;
 
-    if(password !== confirmPassword){
-        toast.error('passwords do not match')
-        return false
-    }
 
-    if(password.length < 6){
-        toast.error('Password must be atlease 6 characters')
-        return false
-    }
+// ============================================================
+// INPUT VALIDATION
+// ============================================================
 
-    return true
+function handleInputErrors({
+  fullname,
+  email,
+  username,
+  phoneNumber,
+  role,
+  password,
+  confirmPassword,
+}) {
+
+  if (
+    !fullname ||
+    !email ||
+    !username ||
+    !phoneNumber ||
+    !role ||
+    !password ||
+    !confirmPassword
+  ) {
+    toast.error(
+      "Please fill all the fields"
+    );
+
+    return false;
+  }
+
+  if (
+    password !== confirmPassword
+  ) {
+    toast.error(
+      "Passwords do not match"
+    );
+
+    return false;
+  }
+
+  if (
+    password.length < 6
+  ) {
+    toast.error(
+      "Password must be at least 6 characters"
+    );
+
+    return false;
+  }
+
+  return true;
 }
