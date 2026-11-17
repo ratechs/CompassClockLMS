@@ -22,4 +22,12 @@
 @import "./layout//student/course_detail";
 @import "./layout//student/material_page";
 @import "./layout/teacher/student_ins_list";
+@import "./layout/student/my_course";
+
+/* Order Management styles */
+@import "./layout/admin/orderManagment.scss";
+
+/* Affiliate Management styles */
+@import "./layout/teacher/affiliateDashboard";
+
 @import "~bootstrap-icons/font/bootstrap-icons.css";

@@ -21,7 +21,8 @@ import StudentRoutes from './routes/studentRoutes.js';
 import institutionRoutes from './routes/institutionRoutes.js';
 import enrollmentRoutes from './routes/enrollment/enrollmentRoutes.js';
 import paymentRoutes from './routes/payment/paymentRoutes.js';
-
+import OrderRouterManagement from './routes/order/orderManagementRoutes.js';
+import affilateRoutes from './routes/affilates/affiliateRoutes.js';
 // ======================================================
 // PATH SETUP
 // ======================================================
@@ -142,6 +143,12 @@ app.use('/api/enrollments', enrollmentRoutes);
 // Payments
 app.use('/api/payments', paymentRoutes);
 
+// Orders
+app.use('/api/order-management', OrderRouterManagement);
+
+// Affilates
+app.use('/api/affiliates', affilateRoutes)
+
 // ======================================================
 // OPTIONAL FULL COURSE ROUTES
 // ======================================================
@@ -157,6 +164,8 @@ const clientBuildPath = path.resolve(
     __dirname,
     '../../lms-react-app/build'
 );
+
+// const clientBuildPath = path.resolve(__dirname, '../build');
 
 console.log(
     chalk.blue(

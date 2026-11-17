@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllCourses, createCourse, updateCourse, deleteCourse, getCourseDetails, submitUserRating, getRating, updateCourseProgress, getCourseProgress, getCoursesByType, getCourseByJoinCode, requestCourseJoin, getJoinRequestsForCourse, handleJoinRequest, getAllJoinRequests, getCountofJoinRequestsByCreator } from '../controllers/courseController.js';
+import { getAllCourses, createCourse, updateCourse, deleteCourse, getCourseDetails, submitUserRating, getRating, updateCourseProgress, getCourseProgress, getCoursesByType, getCourseByJoinCode, requestCourseJoin, getJoinRequestsForCourse, handleJoinRequest, getAllJoinRequests, getCountofJoinRequestsByCreator, checkCourseAccess } from '../controllers/courseController.js';
 import validateCourseCreation from '../middleware/validateCourse.js';
 import authenticate from '../middleware/authenticate.js';
 import updateFullCourse from '../routes/updateFullCourse.js'; // Create this controller
@@ -49,4 +49,5 @@ router.get('/all/Requests', getAllJoinRequests);
 
 router.get('/requests/:creatorId', getCountofJoinRequestsByCreator);
 
+router.get('/check-access/:courseId', checkCourseAccess);
 export default router;

@@ -7,8 +7,9 @@ const affiliateSettingSchema = new mongoose.Schema(
       enum: [
         "student",
         "teacher",
-        "admin",
-        "coordinator",
+        "trainer",
+        "institution",
+        "admin"
       ],
       required: true,
       unique: true
@@ -16,7 +17,7 @@ const affiliateSettingSchema = new mongoose.Schema(
 
     commissionRate: {
       type: Number,
-      default: 0,
+      default: 10,
       min: 0,
       max: 100
     },

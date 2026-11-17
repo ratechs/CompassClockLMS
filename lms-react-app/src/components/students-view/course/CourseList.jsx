@@ -21,7 +21,7 @@ import DOMPurify from "dompurify";
 import { useStudentContext } from "../../../contexts/Student-context";
 import { useAuthcontext } from "../../../contexts/Authcontext";
 
-import { courseListService } from "../../../service/baseService";
+import { courseListService, toggleUserIntrestedCourseService } from "../../../service/baseService";
 
 import defaultIMG from "../../../assets/images/default_images/images.jpg";
 
@@ -41,6 +41,8 @@ import {
   faIndianRupeeSign,
   faCartShopping,
   faCircleCheck,
+  faSpinner,
+  faRedo,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -468,11 +470,12 @@ const CourseList = () => {
 
   const toggleInterested = (courseId) => {
     let updated;
-
+    let actions;
     if (interestedCourses.includes(courseId)) {
       updated = interestedCourses.filter(
         (id) => id !== courseId
       );
+      actions = false
 
       toast("Removed from interested courses");
     } else {
@@ -480,13 +483,14 @@ const CourseList = () => {
         ...interestedCourses,
         courseId,
       ];
-
+      actions = true
       toast.success(
         "Added to interested courses"
       );
     }
 
     setInterestedCourses(updated);
+    toggleUserIntrestedCourseService(updated);
 
     localStorage.setItem(
       "student_interested_courses",
@@ -676,9 +680,10 @@ const CourseList = () => {
       setFreeEnrollLoading(course._id);
 
       const response = await axios.post(
-        "/api/courses/enroll-free",
+        "/api/enrollments/free",
         {
           courseId: course._id,
+          userId: userId,
         },
         {
           headers: {
@@ -973,7 +978,7 @@ const CourseList = () => {
                 course._id
               );
 
-              if(verifyResponse?.data?.orderStatus === "paid") {
+              if (verifyResponse?.data?.orderStatus === "paid") {
                 markCourseAsEnrolled(course._id);
               }
 
@@ -1089,8 +1094,8 @@ const CourseList = () => {
       );
 
       return `${weeks} ${weeks === 1
-          ? "week"
-          : "weeks"
+        ? "week"
+        : "weeks"
         }`;
     }
 
@@ -1100,14 +1105,14 @@ const CourseList = () => {
       );
 
       return `${days} ${days === 1
-          ? "day"
-          : "days"
+        ? "day"
+        : "days"
         }`;
     }
 
     return `${numericTime} ${numericTime === 1
-        ? "hour"
-        : "hours"
+      ? "hour"
+      : "hours"
       }`;
   };
 
@@ -1230,7 +1235,7 @@ const CourseList = () => {
           />
 
           <span>
-            Continue Learning
+            Continue
           </span>
 
           {location === "modal" && (
@@ -1267,7 +1272,7 @@ const CourseList = () => {
           />
 
           <span>
-            Request Pending
+            Request
           </span>
         </Button>
       );
@@ -1311,11 +1316,11 @@ const CourseList = () => {
           ) : (
             <>
               <FontAwesomeIcon
-                icon={faUserPlus}
+                icon={faRedo}
               />
 
               <span>
-                Request Again
+                Retry
               </span>
             </>
           )}
@@ -1367,7 +1372,7 @@ const CourseList = () => {
               />
 
               <span>
-                Request to Join
+                Request
               </span>
             </>
           )}
@@ -1615,7 +1620,7 @@ const CourseList = () => {
           />
 
           <span>
-            Your join request is pending
+            Request Pending
           </span>
         </div>
       );
@@ -1674,7 +1679,7 @@ const CourseList = () => {
           />
 
           <span>
-            Private course — approval required
+           Approval Required
           </span>
         </div>
       );
@@ -1815,9 +1820,9 @@ const CourseList = () => {
                   <button
                     type="button"
                     className={`course-filter-btn ${courseFilter ===
-                        "all"
-                        ? "active"
-                        : ""
+                      "all"
+                      ? "active"
+                      : ""
                       }`}
                     onClick={() =>
                       setCourseFilter(
@@ -1831,9 +1836,9 @@ const CourseList = () => {
                   <button
                     type="button"
                     className={`course-filter-btn ${courseFilter ===
-                        "public"
-                        ? "active"
-                        : ""
+                      "public"
+                      ? "active"
+                      : ""
                       }`}
                     onClick={() =>
                       setCourseFilter(
@@ -1851,9 +1856,9 @@ const CourseList = () => {
                   <button
                     type="button"
                     className={`course-filter-btn ${courseFilter ===
-                        "private"
-                        ? "active"
-                        : ""
+                      "private"
+                      ? "active"
+                      : ""
                       }`}
                     onClick={() =>
                       setCourseFilter(
@@ -1879,9 +1884,9 @@ const CourseList = () => {
                   <button
                     type="button"
                     className={`course-filter-btn ${paymentFilter ===
-                        "all"
-                        ? "active"
-                        : ""
+                      "all"
+                      ? "active"
+                      : ""
                       }`}
                     onClick={() =>
                       setPaymentFilter(
@@ -1895,9 +1900,9 @@ const CourseList = () => {
                   <button
                     type="button"
                     className={`course-filter-btn ${paymentFilter ===
-                        "free"
-                        ? "active"
-                        : ""
+                      "free"
+                      ? "active"
+                      : ""
                       }`}
                     onClick={() =>
                       setPaymentFilter(
@@ -1911,9 +1916,9 @@ const CourseList = () => {
                   <button
                     type="button"
                     className={`course-filter-btn ${paymentFilter ===
-                        "paid"
-                        ? "active"
-                        : ""
+                      "paid"
+                      ? "active"
+                      : ""
                       }`}
                     onClick={() =>
                       setPaymentFilter(
@@ -2005,8 +2010,8 @@ const CourseList = () => {
                       <Col
                         key={course._id}
                         xs="12"
-                        sm="6"
-                        xl="4"
+                        sm="4"
+                        xl="3"
                         className="student-course-column"
                       >
                         <div className="student-course-card">
@@ -2043,25 +2048,68 @@ const CourseList = () => {
                                     : faUnlock
                                 }
                               />
-
-                              <span>
-                                {getCourseVisibility(
+                              {/* {getCourseVisibility(
                                   course
                                 ) ===
                                   "private"
                                   ? "Private"
-                                  : "Public"}
-                              </span>
+                                  : "Public"} */}
                             </div>
 
-                            {/* Price */}
+                            
+
+                            {/* Interested */}
+
+                            <button
+                              type="button"
+                              className={`course-interest-btn ${interested
+                                ? "active"
+                                : ""
+                                }`}
+                              onClick={() =>
+                                toggleInterested(
+                                  course._id
+                                )
+                              }
+                              aria-label={
+                                interested
+                                  ? "Remove from interested"
+                                  : "Add to interested"
+                              }
+                            >
+                              <FontAwesomeIcon
+                                icon={
+                                  faHeart
+                                }
+                                size="sm"
+                              />
+                            </button>
+                          </div>
+
+                          {/* CONTENT */}
+
+                          <div className="student-course-content">
+                            <div className="course-card-heading d-flex justify-content-between align-items-start">
+                             <div className="title-container">
+                               <h3
+                                  className="student-course-title"
+                                  title={getCourseName(
+                                    course
+                                  )}
+                                >
+                                  {getCourseName(
+                                    course
+                                  )}
+                                </h3>
+                             </div>
+                             {/* Price */}
 
                             <div
                               className={`course-price-badge ${isPaidCourse(
                                 course
                               )
-                                  ? "paid"
-                                  : "free"
+                                ? "paid"
+                                : "free"
                                 }`}
                             >
                               {isPaidCourse(
@@ -2097,52 +2145,11 @@ const CourseList = () => {
                               )}
                             </div>
 
-                            {/* Interested */}
-
-                            <button
-                              type="button"
-                              className={`course-interest-btn ${interested
-                                  ? "active"
-                                  : ""
-                                }`}
-                              onClick={() =>
-                                toggleInterested(
-                                  course._id
-                                )
-                              }
-                              aria-label={
-                                interested
-                                  ? "Remove from interested"
-                                  : "Add to interested"
-                              }
-                            >
-                              <FontAwesomeIcon
-                                icon={
-                                  faHeart
-                                }
-                              />
-                            </button>
-                          </div>
-
-                          {/* CONTENT */}
-
-                          <div className="student-course-content">
-                            <div className="course-card-heading">
-                              <h3
-                                className="student-course-title"
-                                title={getCourseName(
-                                  course
-                                )}
-                              >
-                                {getCourseName(
-                                  course
-                                )}
-                              </h3>
                             </div>
 
                             {/* Description */}
 
-                            <div
+                            {/* <div
                               className="student-course-description"
                               dangerouslySetInnerHTML={{
                                 __html:
@@ -2151,7 +2158,7 @@ const CourseList = () => {
                                     "<p>No course description available.</p>"
                                   ),
                               }}
-                            />
+                            /> */}
 
                             {/* Meta */}
 
@@ -2183,7 +2190,21 @@ const CourseList = () => {
                                       course
                                     )
                                   }{" "}
-                                  enrolled
+                                  Enrolled
+                                </span>
+                              </div>
+                              <div className="course-meta-item">
+                                <FontAwesomeIcon
+                                  icon={
+                                    faHeart 
+                                  }
+                                />
+
+                                <span>
+                                  {
+                                    course?.interested_users_count
+                                  }{" "}
+                                  Wishlist
                                 </span>
                               </div>
                             </div>
@@ -2207,7 +2228,7 @@ const CourseList = () => {
                                 }
                               >
                                 <span>
-                                  View Details
+                                  Details
                                 </span>
 
                                 <FontAwesomeIcon
@@ -2303,8 +2324,8 @@ const CourseList = () => {
                     className={`modal-course-price ${isPaidCourse(
                       selectedCourse
                     )
-                        ? "paid"
-                        : "free"
+                      ? "paid"
+                      : "free"
                       }`}
                   >
                     {isPaidCourse(
@@ -2468,8 +2489,8 @@ const CourseList = () => {
                   className={`modal-interest-btn ${isInterested(
                     selectedCourse._id
                   )
-                      ? "active"
-                      : ""
+                    ? "active"
+                    : ""
                     }`}
                   onClick={() =>
                     toggleInterested(

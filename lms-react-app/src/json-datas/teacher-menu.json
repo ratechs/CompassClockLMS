@@ -19,7 +19,22 @@
       "title": "Approvals",
       "href": "/teacher/approvals",
       "icon": "bi bi-shield-fill-check"
-    }
+    },
+    {
+      "title": "Affiliate Dashboard",
+      "href": "/teacher/affiliate",
+      "icon": "bi bi-person-plus-fill"
+    },
+    {
+      "title": "Affiliate Students",
+      "href": "/teacher/refferals",
+      "icon": "bi bi-people"
+    },
+    {
+    "title": "Earnings",
+    "href": "/instructor/earnings",
+    "icon": "bi bi-cash-stack fs-4"
+  }
     
   ] 
   

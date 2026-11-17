@@ -103,6 +103,12 @@ const userSchema = new mongoose.Schema(
       index: true
     },
 
+    intrestedCourses: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course',
+      default: []
+    }],
+
     referredBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

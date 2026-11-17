@@ -15,7 +15,7 @@
     "icon": "bi bi-people-fill fs-4"
   },
   {
-    "title": "Instituions",
+    "title": "Institutions",
     "href": "/instructor/institution",
     "icon": "bi bi-buildings-fill fs-4"
   },
@@ -23,6 +23,51 @@
     "title": "Approvals",
     "href": "/instructor/approvals",
     "icon": "bi bi-shield-fill-check fs-4"
+  },
+  {
+    "title": "Order Management",
+    "href": "/instructor/order-management",
+    "icon": "bi bi-cart-check-fill fs-4",
+    "children": [
+      {
+        "title": "Overview",
+        "href": "/instructor/order-management/overview"
+      },
+      {
+        "title": "Orders",
+        "href": "/instructor/order-management/orders"
+      },
+      {
+        "title": "Refunds",
+        "href": "/instructor/order-management/refunds"
+      },
+      {
+        "title": "Payouts",
+        "href": "/instructor/order-management/payouts"
+      },
+      {
+        "title": "Transactions",
+        "href": "/instructor/order-management/transactions"
+      },
+      {
+        "title": "Reports",
+        "href": "/instructor/order-management/reports"
+      },
+      {
+        "title": "Settings",
+        "href": "/instructor/order-management/settings"
+      }
+    ]
+  },
+  {
+    "title": "Affiliate",
+    "href": "/instructor/affiliate",
+    "icon": "bi bi-person-plus-fill fs-4"
+  },
+  {
+    "title": "Earnings",
+    "href": "/instructor/commissions",
+    "icon": "bi bi-cash-stack fs-4"
   }
 
 ]

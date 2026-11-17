@@ -395,11 +395,15 @@ const CourseDetails = () => {
                       </div>
 
                       {subject?.description && (
-                        <p>
-                          {subject.description}
-                        </p>
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html:
+                              DOMPurify.sanitize(
+                                subject?.description 
+                              ),
+                          }}
+                        />
                       )}
-
                     </div>
 
                     <div className="course-subject-toggle">

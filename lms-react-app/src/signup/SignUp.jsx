@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import useSignup from "../hooks/useSignup";
 
@@ -8,6 +8,19 @@ import logo from "../assets/images/logos/logo.png";
 const SignUp = () => {
   const navigate = useNavigate();
   const { signup, loading } = useSignup();
+
+  // ============================================================
+  // URL / REFERRAL CODE
+  // ============================================================
+
+  const [searchParams] = useSearchParams();
+
+  // Example:
+  // /register?ref=RAJOHN1234
+  //
+  // This will return:
+  // RAJOHN1234
+  const referralCodeFromUrl = searchParams.get("ref");
 
   // ============================================================
   // FORM DATA
@@ -33,6 +46,54 @@ const SignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // ============================================================
+  // SAVE REFERRAL CODE
+  // ============================================================
+  //
+  // If the user opens:
+  //
+  // /register?ref=RAJOHN1234
+  //
+  // we save RAJOHN1234 in localStorage.
+  //
+  // This allows us to remember the affiliate even if the user
+  // registers later.
+  //
+  // Example:
+  //
+  // User clicks affiliate link
+  //       ↓
+  // /register?ref=RAJOHN1234
+  //       ↓
+  // referralCode saved in localStorage
+  //       ↓
+  // User completes registration
+  //       ↓
+  // referralCode sent to backend
+  //
+  // ============================================================
+
+  useEffect(() => {
+    if (referralCodeFromUrl) {
+      localStorage.setItem(
+        "referralCode",
+        referralCodeFromUrl
+      );
+
+      // Track affiliate click
+      fetch(`/api/affiliates/track/${referralCodeFromUrl}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Affiliate click tracked:", data);
+        })
+        .catch((error) => {
+          console.error("Affiliate click tracking failed:", error);
+        });
+    }
+  }, [referralCodeFromUrl]);
+
+  
+
+  // ============================================================
   // FETCH INSTITUTIONS
   // ============================================================
 
@@ -43,7 +104,10 @@ const SignUp = () => {
 
         const res = await axios.get("/api/institutions");
 
-        console.log("Institution API response:", res.data);
+        console.log(
+          "Institution API response:",
+          res.data
+        );
 
         // Supports:
         // { data: [...] }
@@ -53,10 +117,17 @@ const SignUp = () => {
           : res.data?.data || [];
 
         setInstitutions(data);
-      } catch (err) {
-        console.error("Institution fetch error:", err);
 
-        setError("Unable to load institutions. Please try again.");
+      } catch (err) {
+        console.error(
+          "Institution fetch error:",
+          err
+        );
+
+        setError(
+          "Unable to load institutions. Please try again."
+        );
+
       } finally {
         setInstitutionLoading(false);
       }
@@ -151,29 +222,62 @@ const SignUp = () => {
 
     setError(null);
 
-    // Password validation
+    // ==========================================================
+    // PASSWORD VALIDATION
+    // ==========================================================
+
     if (inputs.password !== inputs.confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
     if (inputs.password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setError(
+        "Password must be at least 6 characters."
+      );
       return;
     }
 
-    // Institution required for student and teacher
+    // ==========================================================
+    // INSTITUTION VALIDATION
+    // ==========================================================
+
     if (
-      (inputs.role === "student" || inputs.role === "teacher") &&
+      (inputs.role === "student" ||
+        inputs.role === "teacher") &&
       !inputs.institution
     ) {
-      setError("Please select your institution.");
+      setError(
+        "Please select your institution."
+      );
       return;
     }
 
     try {
       // ========================================================
-      // PREPARE DATA
+      // GET STORED REFERRAL CODE
+      // ========================================================
+      //
+      // If the user came through:
+      //
+      // /register?ref=RAJOHN1234
+      //
+      // the referral code was already saved in localStorage.
+      //
+      // We now retrieve it and send it to the backend.
+      //
+      // ========================================================
+
+      const referralCode =
+        localStorage.getItem("referralCode");
+
+      console.log(
+        "Referral code during registration:",
+        referralCode
+      );
+
+      // ========================================================
+      // PREPARE SIGNUP DATA
       // ========================================================
 
       const signupData = {
@@ -184,24 +288,66 @@ const SignUp = () => {
         password: inputs.password,
         confirmPassword: inputs.confirmPassword,
         role: inputs.role,
+
+        // ======================================================
+        // AFFILIATE REFERRAL CODE
+        // ======================================================
+        //
+        // Example:
+        // referralCode: "RAJOHN1234"
+        //
+        // Backend will use this to identify the affiliate.
+        //
+        referralCode: referralCode || null,
       };
 
-      // Only send institution for student / teacher
+      // ========================================================
+      // ADD INSTITUTION ONLY FOR STUDENT / TEACHER
+      // ========================================================
+
       if (
         inputs.role === "student" ||
         inputs.role === "teacher"
       ) {
-        signupData.institution = inputs.institution;
+        signupData.institution =
+          inputs.institution;
       }
 
-      console.log("Signup data:", signupData);
+      console.log(
+        "Signup data:",
+        signupData
+      );
+
+      // ========================================================
+      // CREATE USER
+      // ========================================================
 
       await signup(signupData);
+
+      // ========================================================
+      // REMOVE REFERRAL CODE AFTER SUCCESSFUL REGISTRATION
+      // ========================================================
+      //
+      // The backend should now have created the Referral
+      // record.
+      //
+      // We no longer need the referral code in this browser.
+      //
+      // ========================================================
+
+      localStorage.removeItem("referralCode");
+
+      // ========================================================
+      // REDIRECT TO LOGIN
+      // ========================================================
 
       navigate("/login");
 
     } catch (err) {
-      console.error("Signup error:", err);
+      console.error(
+        "Signup error:",
+        err
+      );
 
       setError(
         err?.response?.data?.message ||
@@ -293,7 +439,9 @@ const SignUp = () => {
                 <button
                   type="button"
                   className="alert-close-modern"
-                  onClick={() => setError(null)}
+                  onClick={() =>
+                    setError(null)
+                  }
                 >
                   ✕
                 </button>
@@ -522,7 +670,7 @@ const SignUp = () => {
                     stroke="currentColor"
                     strokeWidth="2"
                   >
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z" />
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 0 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z" />
                   </svg>
 
                 </div>
@@ -682,7 +830,9 @@ const SignUp = () => {
                   type="button"
                   className="password-toggle-modern"
                   onClick={() =>
-                    setShowPassword(!showPassword)
+                    setShowPassword(
+                      !showPassword
+                    )
                   }
                   aria-label={
                     showPassword

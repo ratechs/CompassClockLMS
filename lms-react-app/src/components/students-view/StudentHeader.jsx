@@ -104,9 +104,9 @@ const StudentHeader = () => {
             <Button
                 color="primary"
                 className="px-4 py-2 text-white fw-bold rounded-pill btn--primary mx-3"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/my-courses")}
               >
-                Enroll Now
+                My Courses
               </Button>
               <UncontrolledDropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
               <DropdownToggle color="transparent" className="p-0 d-flex align-items-center gap-2 border-0">

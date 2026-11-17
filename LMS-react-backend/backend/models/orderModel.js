@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
+    orderId: {
+      type: String,
+      unique: true
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -36,7 +40,7 @@ const orderSchema = new mongoose.Schema(
       index: true
     },
 
-    raPaymentId: {
+    razorpayPaymentId: {
       type: String,
       default: null
     },
@@ -63,5 +67,18 @@ const orderSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+const generateOrderId = () => {
+  const timestamp = Date.now().toString();
+  const randomNum = Math.floor(1000 + Math.random() * 9000).toString();
+  return `ORD-${randomNum}`;
+};
+
+orderSchema.pre('save', function (next) {
+  if (!this.orderId) {
+    this.orderId = generateOrderId();
+  }
+  next();
+});
 
 export default mongoose.model("Order", orderSchema);

@@ -273,6 +273,10 @@ const CourseList = () => {
                           Duration
                         </th>
 
+                        <th className="text-nowrap">
+                          Intrests
+                        </th>
+
                         <th className="text-nowrap text-center">
                           Actions
                         </th>
@@ -322,10 +326,29 @@ const CourseList = () => {
                             {course.duration || "-"}
                           </td>
 
+                          {/* Interests */}
+                          <td>
+                            {course.interested_users_count || "0"}
+                          </td>
+
                           {/* Actions */}
                           <td>
-                            <div className="d-flex justify-content-center gap-2">
+                            <div className="d-flex justify-content-center gap-1">
 
+                              {/* People */}
+                              <Link
+                                to={`/instructor/courses/intrested-peoples/${course._id}`}
+                                state={{ userData: course.interested_users }}
+                              >
+                                <Button
+                                  color="warning"
+                                  size="sm"
+                                  className="action-button"
+                                  title="Interest People"
+                                >
+                                  <i className="bi bi-people-fill"></i>
+                                </Button>
+                              </Link>
                               {/* Edit */}
                               <Link
                                 to={`/instructor/edit-course/${course._id}`}

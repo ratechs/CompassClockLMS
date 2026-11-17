@@ -5,25 +5,29 @@ const commissionSchema = new mongoose.Schema(
     affiliate: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Affiliate",
-      required: true
+      required: true,
+      index: true
     },
 
     affiliateUser: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
+      index: true
     },
 
     referredUser: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
-      required: true
+      required: true,
+      unique: true,
+      index: true
     },
 
     course: {
@@ -34,17 +38,21 @@ const commissionSchema = new mongoose.Schema(
 
     saleAmount: {
       type: Number,
-      required: true
+      required: true,
+      min:0
     },
 
     commissionRate: {
       type: Number,
-      required: true
+      required: true,
+      min:0,
+      max: 100,
     },
 
     commissionAmount: {
       type: Number,
-      required: true
+      required: true,
+      min:0
     },
 
     status: {

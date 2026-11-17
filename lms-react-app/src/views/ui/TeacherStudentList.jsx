@@ -1,924 +1,817 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  faEdit,
-  faTrash,
-  faBan,
-  faCheck,
-  faEye,
-  faUserGraduate,
-  faSearch,
-  faFilter,
-  faPlus,
-  faUsers,
-  faUserCheck,
-  faUserSlash,
-  faRotateLeft,
-  faChevronLeft,
-  faChevronRight,
-} from "@fortawesome/free-solid-svg-icons";
+  FaSearch,
+  FaSyncAlt,
+  FaUserGraduate,
+  FaBookOpen,
+  FaCheckCircle,
+  FaBan,
+  FaEdit,
+  FaEye,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-hot-toast";
-import { useParams, useNavigate } from "react-router-dom";
-import { orderBy } from "lodash";
+import toast from "react-hot-toast";
+
 const StudentList = () => {
-  const { id: institutionId } = useParams();
   const navigate = useNavigate();
 
-  const [studentsData, setStudentsData] = useState([]);
-  const [studentsCount, setStudentCount] = useState(0);
-  const [institutionDetails, setInstitutionDetails] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [reffered, setReffereds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [filters, setFilters] = useState({
-    student_id: "",
-    full_name: "",
-    class: "",
-    section: "",
-    father_name: "",
-    status: "",
-  });
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [currentPage, setCurrentPage] = useState(1);
 
   const studentsPerPage = 10;
 
-  // =========================================================
-  // FETCH STUDENTS
-  // =========================================================
+  /* =====================================================
+     GET CURRENT TEACHER
+  ===================================================== */
 
-  useEffect(() => {
-    const fetchStudentsByInstitution = async () => {
-      setLoading(true);
+  const getCurrentUser = () => {
+    try {
+      const storedUser = localStorage.getItem("lms-user");
 
-      try {
-        const response = await axios.get(
-          `/api/students/institution/${institutionId}`
-        );
+      if (!storedUser) return null;
 
-        const students = Array.isArray(response.data?.data)
-          ? response.data.data
+      const parsedUser = JSON.parse(storedUser);
+
+      return parsedUser?.user || parsedUser;
+    } catch (error) {
+      console.error("Unable to read logged-in user:", error);
+      return null;
+    }
+  };
+
+  /* =====================================================
+     FETCH STUDENTS
+  ===================================================== */
+
+  const fetchStudents = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      const currentUser = getCurrentUser();
+
+      if (!currentUser?._id) {
+        toast.error("Teacher information not found");
+        return;
+      }
+
+      const response = await axios.get("/api/courses/");
+
+      const courses = Array.isArray(response.data)
+        ? response.data
+        : response.data?.courses || [];
+
+      /*
+       * Only courses created by the logged-in teacher
+       */
+      const teacherCourses = courses.filter(
+        (course) =>
+          String(course?.created_by?._id || course?.created_by) ===
+          String(currentUser._id)
+      );
+
+      /*
+       * Deduplicate students
+       */
+      const studentMap = new Map();
+
+      teacherCourses.forEach((course) => {
+        const joinRequests = Array.isArray(course?.joinRequests)
+          ? course.joinRequests
           : [];
 
-        setStudentsData(
-          orderBy(students, ["student_id"], ["asc"])
-        );
+        joinRequests.forEach((request) => {
+          const student = request?.user;
 
-        setStudentCount(response.data?.count || students.length);
+          if (!student?._id) return;
 
-        if (students.length > 0) {
-          setInstitutionDetails(students[0]?.school_info || null);
-        } else {
-          setInstitutionDetails(null);
-        }
-      } catch (error) {
-        console.error("Error fetching students:", error);
+          const studentId = String(student._id);
 
-        toast.error(
-          error.response?.data?.message ||
-            "Error fetching students. Please try again."
-        );
+          if (!studentMap.has(studentId)) {
+            studentMap.set(studentId, {
+              ...student,
 
-        setStudentsData([]);
-        setStudentCount(0);
-        setInstitutionDetails(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+              requestedCourses: [
+                {
+                  id: course?._id,
+                  name:
+                    course?.course_name ||
+                    course?.courseName ||
+                    course?.name ||
+                    "Untitled Course",
+                  status: request?.status || "pending",
+                },
+              ],
+            });
+          } else {
+            const existingStudent = studentMap.get(studentId);
 
-    if (institutionId) {
-      fetchStudentsByInstitution();
-    } else {
-      toast.error("Institution ID not found");
+            const alreadyAdded = existingStudent.requestedCourses.some(
+              (item) => String(item.id) === String(course?._id)
+            );
+
+            if (!alreadyAdded) {
+              existingStudent.requestedCourses.push({
+                id: course?._id,
+                name:
+                  course?.course_name ||
+                  course?.courseName ||
+                  course?.name ||
+                  "Untitled Course",
+                status: request?.status || "pending",
+              });
+            }
+          }
+        });
+      });
+
+      setStudents(Array.from(studentMap.values()));
+    } catch (error) {
+      console.error("Error fetching students:", error);
+
+      toast.error(
+        error?.response?.data?.message || "Failed to load students"
+      );
+    } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [institutionId]);
-
-  // =========================================================
-  // FILTER CHANGE
-  // =========================================================
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setCurrentPage(1);
   };
 
-  // =========================================================
-  // CLEAR FILTERS
-  // =========================================================
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
-  const clearFilters = () => {
-    setFilters({
-      student_id: "",
-      full_name: "",
-      class: "",
-      section: "",
-      father_name: "",
-      status: "",
-    });
 
-    setCurrentPage(1);
+  /* =====================================================
+     STUDENT STATUS
+  ===================================================== */
+
+  const getStudentStatus = (student) => {
+    if (student?.isActive === false) {
+      return "blocked";
+    }
+
+    return "active";
   };
 
-  const hasFilters = Object.values(filters).some(
-    (value) => value !== ""
-  );
-
-  // =========================================================
-  // FILTER STUDENTS
-  // =========================================================
+  /* =====================================================
+     FILTER STUDENTS
+  ===================================================== */
 
   const filteredStudents = useMemo(() => {
-    if (!Array.isArray(studentsData)) {
-      return [];
-    }
+    const searchValue = search.trim().toLowerCase();
 
-    return studentsData.filter((student) => {
-      const studentId =
-        student.student_id?.toString().toLowerCase() || "";
+    return students.filter((student) => {
+      const studentStatus = getStudentStatus(student);
 
-      const name =
-        student.full_name?.toString().toLowerCase() || "";
+      const fullName = student?.fullname || "";
+      const username = student?.username || "";
+      const email = student?.email || "";
+      const phone = student?.phoneNumber
+        ? String(student.phoneNumber)
+        : "";
 
-      const studentClass =
-        student.class?.toString().toLowerCase() || "";
+      const courseNames = (student?.requestedCourses || [])
+        .map((course) => course?.name || "")
+        .join(" ");
 
-      const section =
-        student.section?.toString().toLowerCase() || "";
+      const searchableText = `
+        ${fullName}
+        ${username}
+        ${email}
+        ${phone}
+        ${courseNames}
+      `.toLowerCase();
 
-      const fatherName =
-        student.parent_info?.father?.name
-          ?.toString()
-          .toLowerCase() || "";
+      const matchesSearch =
+        !searchValue || searchableText.includes(searchValue);
 
-      const status =
-        student.status?.toString().toLowerCase() || "active";
+      const matchesStatus =
+        statusFilter === "all" || studentStatus === statusFilter;
 
-      return (
-        (!filters.student_id ||
-          studentId.includes(
-            filters.student_id.toLowerCase()
-          )) &&
-        (!filters.full_name ||
-          name.includes(filters.full_name.toLowerCase())) &&
-        (!filters.class ||
-          studentClass.includes(filters.class.toLowerCase())) &&
-        (!filters.section ||
-          section.includes(filters.section.toLowerCase())) &&
-        (!filters.father_name ||
-          fatherName.includes(
-            filters.father_name.toLowerCase()
-          )) &&
-        (!filters.status ||
-          status === filters.status.toLowerCase())
-      );
+      return matchesSearch && matchesStatus;
     });
-  }, [studentsData, filters]);
+  }, [students, search, statusFilter]);
 
-  // =========================================================
-  // STUDENT STATISTICS
-  // =========================================================
+  /* =====================================================
+     STATISTICS
+  ===================================================== */
 
-  const statistics = useMemo(() => {
-    const active = studentsData.filter(
-      (student) => (student.status || "active") === "active"
-    ).length;
+  const totalStudents = students.length;
 
-    const inactive = studentsData.filter(
-      (student) => student.status === "inactive"
-    ).length;
+  const activeStudents = students.filter(
+    (student) => getStudentStatus(student) === "active"
+  ).length;
 
-    const suspended = studentsData.filter(
-      (student) => student.status === "suspended"
-    ).length;
+  const blockedStudents = students.filter(
+    (student) => getStudentStatus(student) === "blocked"
+  ).length;
 
-    return {
-      total: studentsData.length,
-      active,
-      inactive,
-      suspended,
-    };
-  }, [studentsData]);
+  /* =====================================================
+     PAGINATION
+  ===================================================== */
 
-  // =========================================================
-  // PAGINATION
-  // =========================================================
-
-  const pageCount = Math.ceil(
-    filteredStudents.length / studentsPerPage
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredStudents.length / studentsPerPage)
   );
 
-  const paginatedStudents = useMemo(() => {
-    const start = (currentPage - 1) * studentsPerPage;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
 
-    return filteredStudents.slice(
-      start,
-      start + studentsPerPage
-    );
-  }, [filteredStudents, currentPage]);
+  const startIndex = (safeCurrentPage - 1) * studentsPerPage;
 
-  // =========================================================
-  // CRUD
-  // =========================================================
+  const paginatedStudents = filteredStudents.slice(
+    startIndex,
+    startIndex + studentsPerPage
+  );
 
-  const viewStudent = (student) => {
-    navigate(`/teacher/students/${student.student_id}`);
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
 
-  const editStudent = (student) => {
-    navigate(`/teacher/students/edit/${student.student_id}`);
-  };
+  /* =====================================================
+     UPDATE STUDENT STATUS
+  ===================================================== */
 
-  const deleteStudent = async (student) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${student.full_name}?`
-    );
+  const updateStudentStatus = async (student) => {
+    if (!student?._id) return;
 
-    if (!confirmed) return;
+    const currentStatus = getStudentStatus(student);
+
+    const newStatus = currentStatus === "active" ? "blocked" : "active";
 
     try {
-      await axios.delete(
-        `/api/students/${student.student_id}`
-      );
-
-      setStudentsData((prev) =>
-        prev.filter(
-          (s) => s.student_id !== student.student_id
-        )
-      );
-
-      setStudentCount((prev) =>
-        Math.max(0, prev - 1)
-      );
-
-      toast.success(
-        `${student.full_name} deleted successfully.`
-      );
-    } catch (error) {
-      console.error("Error deleting student:", error);
-
-      toast.error(
-        error.response?.data?.message ||
-          "Error deleting student. Please try again."
-      );
-    }
-  };
-
-  const updateStatus = async (student, newStatus) => {
-    try {
-      await axios.patch(
-        `/api/students/${student.student_id}/status`,
+      await axios.put(
+        `/api/users/update-userStatus/${student._id}`,
         {
-          status: newStatus,
+          isActive: newStatus === "active",
         }
       );
 
-      setStudentsData((prev) =>
-        prev.map((s) =>
-          s.student_id === student.student_id
+      toast.success(
+        newStatus === "active"
+          ? "Student activated successfully"
+          : "Student blocked successfully"
+      );
+
+      setStudents((prevStudents) =>
+        prevStudents.map((item) =>
+          String(item._id) === String(student._id)
             ? {
-                ...s,
-                status: newStatus,
+                ...item,
+                isActive: newStatus === "active",
               }
-            : s
+            : item
         )
       );
-
-      toast.success(
-        `Student status updated to ${newStatus}.`
-      );
     } catch (error) {
-      console.error("Error updating status:", error);
+      console.error("Status update error:", error);
 
       toast.error(
-        error.response?.data?.message ||
-          "Error updating status. Please try again."
+        error?.response?.data?.message ||
+          "Failed to update student status"
       );
     }
   };
 
-  // =========================================================
-  // LOADING
-  // =========================================================
+  /* =====================================================
+     VIEW STUDENT
+  ===================================================== */
 
-  if (loading) {
-    return (
-      <div className="student-list-page">
-        <div className="student-loading">
-          <div className="student-loading-spinner">
-            <FontAwesomeIcon icon={faUserGraduate} />
-          </div>
+  const handleViewStudent = (student) => {
+    if (!student?._id) return;
 
-          <h5>Loading students...</h5>
+    navigate(`/teacher/users/${student._id}`);
+  };
 
-          <p>
-            Please wait while we load the student records.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  /* =====================================================
+     EDIT STUDENT
+  ===================================================== */
 
-  // =========================================================
-  // RENDER
-  // =========================================================
+  const handleEditStudent = (student) => {
+    if (!student?._id) return;
+
+    navigate(`/teacher/users/edit/${student._id}`);
+  };
+
+  /* =====================================================
+     PAGE CHANGE
+  ===================================================== */
+
+  const changePage = (page) => {
+    if (page < 1 || page > totalPages) return;
+
+    setCurrentPage(page);
+  };
+
+  /* =====================================================
+     RENDER
+  ===================================================== */
 
   return (
     <div className="student-list-page">
 
-      {/* =====================================================
+      {/* =================================================
           HEADER
-      ====================================================== */}
+      ================================================= */}
 
-      <div className="student-page-header">
+      <div className="student-list-header">
 
-        <div className="student-header-left">
-
-          <div className="student-header-icon">
-            <FontAwesomeIcon icon={faUserGraduate} />
-          </div>
-
-          <div>
-            <div className="student-breadcrumb">
-              Institution / Students
+        <div>
+          <div className="student-list-title-row">
+            <div className="student-list-title-icon">
+              <FaUserGraduate />
             </div>
 
-            <h2>Student Management</h2>
+            <div>
+              <h2>Students</h2>
 
-            <p>
-              Manage students, profiles and account status.
-            </p>
+              <p>
+                Manage and monitor students enrolled in your courses
+              </p>
+            </div>
           </div>
-
         </div>
 
         <button
-          className="student-add-button"
-          onClick={() =>
-            navigate("/teacher/students/add")
-          }
+          type="button"
+          className={`student-refresh-btn ${
+            refreshing ? "refreshing" : ""
+          }`}
+          onClick={() => fetchStudents(true)}
+          disabled={refreshing}
         >
-          <FontAwesomeIcon icon={faPlus} />
-          <span>Add Student</span>
+          <FaSyncAlt />
+
+          <span>
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </span>
         </button>
-
       </div>
 
-      {/* =====================================================
-          INSTITUTION INFO
-      ====================================================== */}
-
-      <div className="institution-card">
-
-        <div className="institution-card-icon">
-          <FontAwesomeIcon icon={faUsers} />
-        </div>
-
-        <div className="institution-card-content">
-          <span>Institution</span>
-
-          <strong>
-            {institutionDetails?.name?.name ||
-              institutionDetails?.name ||
-              "Institution"}
-          </strong>
-        </div>
-
-        <div className="institution-divider" />
-
-        <div className="institution-stat">
-          <span>Total Students</span>
-          <strong>{studentsCount}</strong>
-        </div>
-
-      </div>
-
-      {/* =====================================================
+      {/* =================================================
           STATISTICS
-      ====================================================== */}
+      ================================================= */}
 
       <div className="student-stat-grid">
 
         <div className="student-stat-card">
-          <div className="student-stat-icon total">
-            <FontAwesomeIcon icon={faUsers} />
+          <div className="student-stat-icon">
+            <FaUserGraduate />
           </div>
 
           <div>
             <span>Total Students</span>
-            <strong>{statistics.total}</strong>
+            <strong>{totalStudents}</strong>
           </div>
         </div>
 
         <div className="student-stat-card">
-          <div className="student-stat-icon active">
-            <FontAwesomeIcon icon={faUserCheck} />
+          <div className="student-stat-icon">
+            <FaCheckCircle />
           </div>
 
           <div>
-            <span>Active</span>
-            <strong>{statistics.active}</strong>
+            <span>Active Students</span>
+            <strong>{activeStudents}</strong>
           </div>
         </div>
 
         <div className="student-stat-card">
-          <div className="student-stat-icon inactive">
-            <FontAwesomeIcon icon={faUserSlash} />
+          <div className="student-stat-icon">
+            <FaBan />
           </div>
 
           <div>
-            <span>Inactive</span>
-            <strong>{statistics.inactive}</strong>
+            <span>Blocked Students</span>
+            <strong>{blockedStudents}</strong>
           </div>
         </div>
 
         <div className="student-stat-card">
-          <div className="student-stat-icon suspended">
-            <FontAwesomeIcon icon={faBan} />
+          <div className="student-stat-icon">
+            <FaBookOpen />
           </div>
 
           <div>
-            <span>Suspended</span>
-            <strong>{statistics.suspended}</strong>
+            <span>Reffered</span>
+            <strong>{filteredStudents.length}</strong>
           </div>
         </div>
 
       </div>
 
-      {/* =====================================================
-          FILTER PANEL
-      ====================================================== */}
+      {/* =================================================
+          FILTERS
+      ================================================= */}
 
       <div className="student-filter-card">
 
-        <div className="student-filter-header">
+        <div className="student-search-box">
+          <FaSearch />
 
-          <div>
-            <h5>
-              <FontAwesomeIcon icon={faFilter} />
-              Search & Filter
-            </h5>
+          <input
+            type="text"
+            placeholder="Search student, email, phone or course..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
-            <span>
-              Find students using the filters below.
-            </span>
-          </div>
-
-          {hasFilters && (
+          {search && (
             <button
-              className="clear-filter-button"
-              onClick={clearFilters}
+              type="button"
+              className="student-search-clear"
+              onClick={() => setSearch("")}
             >
-              <FontAwesomeIcon icon={faRotateLeft} />
-              Clear Filters
+              ×
             </button>
           )}
-
         </div>
 
-        <div className="student-filter-grid">
+        <div className="student-status-filters">
 
-          <div className="student-input-group">
-            <label>Student ID</label>
+          <button
+            type="button"
+            className={
+              statusFilter === "all"
+                ? "student-filter active"
+                : "student-filter"
+            }
+            onClick={() => setStatusFilter("all")}
+          >
+            All
+            <span>{totalStudents}</span>
+          </button>
 
-            <div className="student-input-wrapper">
-              <FontAwesomeIcon icon={faSearch} />
+          <button
+            type="button"
+            className={
+              statusFilter === "active"
+                ? "student-filter active"
+                : "student-filter"
+            }
+            onClick={() => setStatusFilter("active")}
+          >
+            Active
+            <span>{activeStudents}</span>
+          </button>
 
-              <input
-                type="text"
-                name="student_id"
-                placeholder="Search ID..."
-                value={filters.student_id}
-                onChange={handleFilterChange}
-              />
-            </div>
-          </div>
-
-          <div className="student-input-group">
-            <label>Student Name</label>
-
-            <div className="student-input-wrapper">
-              <FontAwesomeIcon icon={faSearch} />
-
-              <input
-                type="text"
-                name="full_name"
-                placeholder="Search name..."
-                value={filters.full_name}
-                onChange={handleFilterChange}
-              />
-            </div>
-          </div>
-
-          <div className="student-input-group">
-            <label>Class</label>
-
-            <input
-              type="text"
-              name="class"
-              placeholder="Class..."
-              value={filters.class}
-              onChange={handleFilterChange}
-            />
-          </div>
-
-          <div className="student-input-group">
-            <label>Section</label>
-
-            <input
-              type="text"
-              name="section"
-              placeholder="Section..."
-              value={filters.section}
-              onChange={handleFilterChange}
-            />
-          </div>
-
-          <div className="student-input-group">
-            <label>Father Name</label>
-
-            <input
-              type="text"
-              name="father_name"
-              placeholder="Father name..."
-              value={filters.father_name}
-              onChange={handleFilterChange}
-            />
-          </div>
-
-          <div className="student-input-group">
-            <label>Status</label>
-
-            <select
-              name="status"
-              value={filters.status}
-              onChange={handleFilterChange}
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="transferred">
-                Transferred
-              </option>
-              <option value="graduated">
-                Graduated
-              </option>
-              <option value="suspended">
-                Suspended
-              </option>
-            </select>
-          </div>
+          <button
+            type="button"
+            className={
+              statusFilter === "blocked"
+                ? "student-filter active"
+                : "student-filter"
+            }
+            onClick={() => setStatusFilter("blocked")}
+          >
+            Blocked
+            <span>{blockedStudents}</span>
+          </button>
 
         </div>
 
       </div>
 
-      {/* =====================================================
-          TABLE CARD
-      ====================================================== */}
+      {/* =================================================
+          TABLE
+      ================================================= */}
 
       <div className="student-table-card">
 
-        <div className="student-table-header">
+        {loading ? (
+          <div className="student-loading">
 
-          <div>
-            <h5>Students</h5>
+            <div className="student-spinner"></div>
 
-            <span>
-              {filteredStudents.length} student
-              {filteredStudents.length !== 1 ? "s" : ""} found
-            </span>
+            <p>Loading students...</p>
+
           </div>
+        ) : paginatedStudents.length === 0 ? (
+          <div className="student-empty">
 
-          <div className="student-result-badge">
-            {filteredStudents.length} Results
+            <div className="student-empty-icon">
+              <FaUserGraduate />
+            </div>
+
+            <h3>No students found</h3>
+
+            <p>
+              {search || statusFilter !== "all"
+                ? "Try changing your search or filter."
+                : "Students from your courses will appear here."}
+            </p>
+
+            {(search || statusFilter !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("all");
+                }}
+              >
+                Clear Filters
+              </button>
+            )}
+
           </div>
+        ) : (
+          <>
 
-        </div>
+            <div className="student-table-wrapper">
 
-        <div className="student-table-scroll">
+              <table className="student-table">
 
-          <table className="student-modern-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Contact</th>
+                    <th>Courses</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
 
-            <thead>
-              <tr>
-                <th>Student</th>
-                <th>Roll No.</th>
-                <th>Class</th>
-                <th>Parent</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th className="actions-heading">
-                  Actions
-                </th>
-              </tr>
-            </thead>
+                <tbody>
 
-            <tbody>
+                  {paginatedStudents.map((student) => {
 
-              {paginatedStudents.length > 0 ? (
+                    const status = getStudentStatus(student);
 
-                paginatedStudents.map((student) => {
+                    return (
+                      <tr key={student._id}>
 
-                  const status =
-                    student.status || "active";
+                        {/* STUDENT */}
 
-                  return (
-                    <tr
-                      key={
-                        student._id ||
-                        student.student_id
-                      }
-                    >
+                        <td>
 
-                      {/* Student */}
-                      <td>
-                        <div className="student-profile-cell">
+                          <div className="student-profile">
 
-                          <div className="student-avatar">
-                            {student.full_name
-                              ?.charAt(0)
-                              ?.toUpperCase() || "S"}
+                            <div className="student-avatar">
+
+                              {student?.profilePicture ? (
+                                <img
+                                  src={student.profilePicture}
+                                  alt={student?.fullname || "Student"}
+                                />
+                              ) : (
+                                <span>
+                                  {(
+                                    student?.fullname ||
+                                    student?.username ||
+                                    "S"
+                                  )
+                                    .charAt(0)
+                                    .toUpperCase()}
+                                </span>
+                              )}
+
+                            </div>
+
+                            <div className="student-profile-info">
+
+                              <strong>
+                                {student?.fullname || "Unnamed Student"}
+                              </strong>
+
+                              <span>
+                                {student?.username || "-"}
+                              </span>
+
+                            </div>
+
                           </div>
 
-                          <div>
-                            <strong>
-                              {student.full_name ||
-                                "Unnamed Student"}
-                            </strong>
+                        </td>
+
+                        {/* CONTACT */}
+
+                        <td>
+
+                          <div className="student-contact">
 
                             <span>
-                              ID:{" "}
-                              {student.student_id ||
-                                "-"}
+                              {student?.email || "-"}
                             </span>
+
+                            <small>
+                              {student?.phoneNumber || "-"}
+                            </small>
+
                           </div>
 
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Roll */}
-                      <td>
-                        <span className="roll-badge">
-                          {student.roll_number || "-"}
-                        </span>
-                      </td>
+                        {/* COURSES */}
 
-                      {/* Class */}
-                      <td>
-                        <div className="class-cell">
+                        <td>
 
-                          <strong>
-                            {student.class || "-"}
-                          </strong>
+                          <div className="student-course-list">
 
-                          {student.section && (
-                            <span>
-                              Section{" "}
-                              {student.section.toUpperCase()}
-                            </span>
-                          )}
+                            {student?.requestedCourses?.length > 0 ? (
+                              <>
+                                {student.requestedCourses
+                                  .slice(0, 2)
+                                  .map((course) => (
+                                    <span
+                                      className="student-course-badge"
+                                      key={course.id}
+                                      title={course.name}
+                                    >
+                                      <FaBookOpen />
+                                      {course.name}
+                                    </span>
+                                  ))}
 
-                        </div>
-                      </td>
+                                {student.requestedCourses.length > 2 && (
+                                  <span className="student-more-courses">
+                                    +{student.requestedCourses.length - 2}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="student-no-course">
+                                No course
+                              </span>
+                            )}
 
-                      {/* Parent */}
-                      <td>
-                        <div className="parent-cell">
-                          <strong>
-                            {student.parent_info?.father
-                              ?.name || "-"}
-                          </strong>
+                          </div>
 
-                          <span>
-                            Father
-                          </span>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Contact */}
-                      <td>
-                        <div className="contact-cell">
+                        {/* STATUS */}
 
-                          <span>
-                            {student.parent_info?.father
-                              ?.contact || "-"}
-                          </span>
+                        <td>
 
-                          <span>
-                            {student.parent_info?.mother
-                              ?.contact || "-"}
+                          <span
+                            className={`student-status ${status}`}
+                          >
+                            <span className="student-status-dot"></span>
+
+                            {status === "active"
+                              ? "Active"
+                              : "Blocked"}
                           </span>
 
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Status */}
-                      <td>
+                        {/* ACTIONS */}
 
-                        <span
-                          className={`student-status-badge ${status}`}
-                        >
-                          <span className="status-dot" />
-                          {status}
-                        </span>
+                        <td>
 
-                      </td>
+                          <div className="student-actions">
 
-                      {/* Actions */}
-                      <td>
-
-                        <div className="student-action-buttons">
-
-                          <button
-                            onClick={() =>
-                              viewStudent(student)
-                            }
-                            className="student-action view"
-                            title="View Student"
-                          >
-                            <FontAwesomeIcon
-                              icon={faEye}
-                            />
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              editStudent(student)
-                            }
-                            className="student-action edit"
-                            title="Edit Student"
-                          >
-                            <FontAwesomeIcon
-                              icon={faEdit}
-                            />
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              updateStatus(
-                                student,
-                                status === "active"
-                                  ? "inactive"
-                                  : "active"
-                              )
-                            }
-                            className={`student-action ${
-                              status === "active"
-                                ? "block"
-                                : "activate"
-                            }`}
-                            title={
-                              status === "active"
-                                ? "Deactivate"
-                                : "Activate"
-                            }
-                          >
-                            <FontAwesomeIcon
-                              icon={
-                                status === "active"
-                                  ? faBan
-                                  : faCheck
+                            <button
+                              type="button"
+                              className="student-action view"
+                              title="View Student"
+                              onClick={() =>
+                                handleViewStudent(student)
                               }
-                            />
-                          </button>
+                            >
+                              <FaEye />
+                            </button>
 
-                          <button
-                            onClick={() =>
-                              deleteStudent(student)
-                            }
-                            className="student-action delete"
-                            title="Delete Student"
-                          >
-                            <FontAwesomeIcon
-                              icon={faTrash}
-                            />
-                          </button>
+                            <button
+                              type="button"
+                              className="student-action edit"
+                              title="Edit Student"
+                              onClick={() =>
+                                handleEditStudent(student)
+                              }
+                            >
+                              <FaEdit />
+                            </button>
 
-                        </div>
+                            <button
+                              type="button"
+                              className={`student-action ${
+                                status === "active"
+                                  ? "block"
+                                  : "activate"
+                              }`}
+                              title={
+                                status === "active"
+                                  ? "Block Student"
+                                  : "Activate Student"
+                              }
+                              onClick={() =>
+                                updateStudentStatus(student)
+                              }
+                            >
+                              {status === "active" ? (
+                                <FaBan />
+                              ) : (
+                                <FaCheckCircle />
+                              )}
+                            </button>
 
-                      </td>
+                          </div>
 
-                    </tr>
-                  );
-                })
+                        </td>
 
-              ) : (
+                      </tr>
+                    );
+                  })}
 
-                <tr>
+                </tbody>
 
-                  <td
-                    colSpan="7"
-                    className="student-empty-cell"
-                  >
-
-                    <div className="student-empty-state">
-
-                      <div className="student-empty-icon">
-                        <FontAwesomeIcon
-                          icon={faUserGraduate}
-                        />
-                      </div>
-
-                      <h5>
-                        No students found
-                      </h5>
-
-                      <p>
-                        No student records match your
-                        current filters.
-                      </p>
-
-                      {hasFilters && (
-                        <button
-                          onClick={clearFilters}
-                          className="empty-clear-button"
-                        >
-                          Clear Filters
-                        </button>
-                      )}
-
-                    </div>
-
-                  </td>
-
-                </tr>
-
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        {/* ===================================================
-            TABLE FOOTER
-        ==================================================== */}
-
-        <div className="student-table-footer">
-
-          <span>
-            Showing{" "}
-            <strong>
-              {paginatedStudents.length}
-            </strong>{" "}
-            of{" "}
-            <strong>
-              {filteredStudents.length}
-            </strong>{" "}
-            students
-          </span>
-
-          {pageCount > 1 && (
-            <div className="student-pagination">
-
-              <button
-                disabled={currentPage === 1}
-                onClick={() =>
-                  setCurrentPage(
-                    (prev) => prev - 1
-                  )
-                }
-              >
-                <FontAwesomeIcon
-                  icon={faChevronLeft}
-                />
-              </button>
-
-              <span>
-                Page{" "}
-                <strong>{currentPage}</strong>{" "}
-                of{" "}
-                <strong>{pageCount}</strong>
-              </span>
-
-              <button
-                disabled={
-                  currentPage === pageCount
-                }
-                onClick={() =>
-                  setCurrentPage(
-                    (prev) => prev + 1
-                  )
-                }
-              >
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                />
-              </button>
+              </table>
 
             </div>
-          )}
 
-        </div>
+            {/* =================================================
+                PAGINATION
+            ================================================= */}
+
+            <div className="student-pagination">
+
+              <div className="student-pagination-info">
+
+                Showing{" "}
+                <strong>
+                  {filteredStudents.length === 0
+                    ? 0
+                    : startIndex + 1}
+                </strong>{" "}
+                to{" "}
+                <strong>
+                  {Math.min(
+                    startIndex + studentsPerPage,
+                    filteredStudents.length
+                  )}
+                </strong>{" "}
+                of{" "}
+                <strong>{filteredStudents.length}</strong>{" "}
+                students
+
+              </div>
+
+              <div className="student-pagination-controls">
+
+                <button
+                  type="button"
+                  disabled={safeCurrentPage === 1}
+                  onClick={() =>
+                    changePage(safeCurrentPage - 1)
+                  }
+                >
+                  <FaChevronLeft />
+                </button>
+
+                {Array.from(
+                  { length: totalPages },
+                  (_, index) => index + 1
+                )
+                  .slice(
+                    Math.max(0, safeCurrentPage - 3),
+                    Math.min(totalPages, safeCurrentPage + 2)
+                  )
+                  .map((page) => (
+                    <button
+                      type="button"
+                      key={page}
+                      className={
+                        safeCurrentPage === page
+                          ? "active"
+                          : ""
+                      }
+                      onClick={() => changePage(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                <button
+                  type="button"
+                  disabled={safeCurrentPage === totalPages}
+                  onClick={() =>
+                    changePage(safeCurrentPage + 1)
+                  }
+                >
+                  <FaChevronRight />
+                </button>
+
+              </div>
+
+            </div>
+
+          </>
+        )}
 
       </div>
 

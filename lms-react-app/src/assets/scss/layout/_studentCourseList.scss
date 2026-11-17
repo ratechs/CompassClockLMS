@@ -266,24 +266,18 @@
 ============================================================ */
 
 .student-course-image-wrapper {
-  position: relative;
-
   width: 100%;
-  height: 205px;
-
+  aspect-ratio: 16 / 9;
   overflow: hidden;
-
-  background: #eceef5;
+  border-radius: 12px 12px 0 0;
 }
 
 .student-course-image {
   width: 100%;
   height: 100%;
-
   display: block;
-
   object-fit: cover;
-
+  object-position: center;
   transition: transform 0.4s ease;
 }
 
@@ -311,9 +305,6 @@
 ============================================================ */
 
 .course-type-badge {
-  position: absolute;
-  left: 14px;
-  top: 14px;
 
   display: inline-flex;
   align-items: center;
@@ -321,15 +312,15 @@
 
   max-width: calc(100% - 70px);
 
-  padding: 7px 11px;
+  padding: 5px 10px;
 
-  border-radius: 8px;
+  border-radius: 5px;
 
   background: rgba(255, 255, 255, 0.94);
 
-  color: #5e57d9;
+  color: #ff0000 !important;
 
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 
   backdrop-filter: blur(8px);
@@ -350,11 +341,11 @@
   right: 14px;
   top: 14px;
 
-  width: 38px;
-  height: 38px;
+  width: 20px;
+  height: 20px;
 
   border: none;
-  border-radius: 50%;
+  border-radius: 5px;
 
   display: flex;
   align-items: center;
@@ -387,7 +378,7 @@
 ============================================================ */
 
 .student-course-content {
-  padding: 20px;
+  padding: 10px;
 
   display: flex;
   flex-direction: column;
@@ -402,7 +393,7 @@
 
   color: #242844;
 
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 700;
 
   line-height: 1.35;
@@ -419,11 +410,11 @@
 ============================================================ */
 
 .student-course-description {
-  min-height: 54px;
+  min-height: max-content;
 
   color: #858aa2;
 
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.65;
 
   overflow: hidden;
@@ -552,7 +543,7 @@
 .student-course-view-btn,
 .student-course-action-btn {
   min-height: 42px;
-
+  padding: 0 10px !important;
   border-radius: 10px !important;
 
   display: inline-flex !important;
@@ -1162,7 +1153,7 @@
   }
 
   .student-course-content {
-    padding: 17px;
+    padding: 10px;
   }
 
   .student-course-title {

@@ -6,9 +6,8 @@ export const enrollFreeCourse = async (
   res
 ) => {
   try {
-    const userId = req.user._id;
 
-    const { courseId } = req.body;
+    const { courseId, userId } = req.body;
 
     // ==========================================
     // FIND COURSE
@@ -26,7 +25,7 @@ export const enrollFreeCourse = async (
     // CHECK COURSE TYPE
     // ==========================================
 
-    if (course.courseType !== "free") {
+    if (course.is_paidCourse) {
       return res.status(400).json({
         message:
           "This course is not a free course"

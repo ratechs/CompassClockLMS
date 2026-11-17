@@ -2,19 +2,39 @@ import mongoose from "mongoose";
 
 const affiliateSchema = new mongoose.Schema(
   {
+    // ==========================================
+    // AFFILIATE USER
+    // ==========================================
+
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true
+      unique: true,
+      index: true
     },
+
+    // ==========================================
+    // REFERRAL
+    // ==========================================
 
     referralCode: {
       type: String,
       required: true,
       unique: true,
-      index: true
+      index: true,
+      uppercase: true,
+      trim: true
     },
+
+    referralLink: {
+      type: String,
+      default: null
+    },
+
+    // ==========================================
+    // AFFILIATE ROLE
+    // ==========================================
 
     affiliateRole: {
       type: String,
@@ -22,10 +42,15 @@ const affiliateSchema = new mongoose.Schema(
         "student",
         "teacher",
         "trainer",
-        "institution"
+        "institution",
+        "admin"
       ],
       required: true
     },
+
+    // ==========================================
+    // STATISTICS
+    // ==========================================
 
     clicks: {
       type: Number,
@@ -42,6 +67,10 @@ const affiliateSchema = new mongoose.Schema(
       default: 0
     },
 
+    // ==========================================
+    // EARNINGS
+    // ==========================================
+
     totalEarnings: {
       type: Number,
       default: 0
@@ -57,9 +86,16 @@ const affiliateSchema = new mongoose.Schema(
       default: 0
     },
 
+    // ==========================================
+    // STATUS
+    // ==========================================
+
     status: {
       type: String,
-      enum: ["active", "suspended"],
+      enum: [
+        "active",
+        "suspended"
+      ],
       default: "active"
     }
   },

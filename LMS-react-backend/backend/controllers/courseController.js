@@ -25,18 +25,42 @@ export const getAllCourses = async (req, res) => {
           populate: {
             path: 'institution',
             model: 'Institution',
-            select: 'name', // keep only needed fields
+            select: 'name'
           }
         }
+      })
+      .populate({
+        path: 'created_by',
+        model: 'User'
       });
 
-    res.status(200).json(courses);
+    // Add interested users to each course
+    const updatedCourses = await Promise.all(
+      courses.map(async (course) => {
+        const intrestedCourses = await User.find({
+          intrestedCourses: course.id
+        }).populate({
+          path: 'institution',
+        }); // Populate institution name
+
+        return {
+          ...course.toObject(),
+          interested_users: intrestedCourses,
+          interested_users_count: intrestedCourses.length
+        };
+      })
+    );
+
+    res.status(200).json(updatedCourses);
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error fetching courses', details: error.message });
+    res.status(500).json({
+      error: 'Error fetching courses',
+      details: error.message
+    });
   }
 };
-
 
 // Create a course
 export const createCourse = async (req, res) => {
@@ -623,3 +647,67 @@ export const enrollFreeCourse = async (req, res) => {
     });
   }
 };
+
+
+export const checkCourseAccess = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    const userId = req.user?._id || req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "User not authenticated",
+        hasAccess: false
+      });
+    }
+
+    if (!courseId) {
+      return res.status(400).json({
+        message: "Course ID is required",
+        hasAccess: false
+      });
+    }
+
+    // Check user
+    const user = await User.findById(userId).select("courses");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        hasAccess: false
+      });
+    }
+
+    // Check whether course exists
+    const course = await Course.findById(courseId).select("_id");
+
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found",
+        hasAccess: false
+      });
+    }
+
+    // Check User.courses
+    const hasAccess = user.courses?.some(
+      id => id.toString() === courseId.toString()
+    );
+
+    return res.status(200).json({
+      hasAccess: !!hasAccess,
+      courseId,
+      userId
+    });
+
+  } catch (error) {
+    console.error("Check course access error:", error);
+
+    return res.status(500).json({
+      message: "Error checking course access",
+      hasAccess: false,
+      error: error.message
+    });
+  }
+};
+

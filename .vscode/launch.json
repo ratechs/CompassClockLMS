@@ -5,11 +5,11 @@
             "type": "chrome",
             "request": "launch",
             "name": "Debug React Frontend",
-            "url": "http://localhost:3000",  // ← React dev server port
-            "webRoot": "${workspaceFolder}/src",  // ← Point to source files
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/lms-react-app/src",
             "sourceMapPathOverrides": {
-                "webpack:///./src/*": "${webRoot}/*",
-                "webpack:///src/*": "${webRoot}/*",
+                "webpack:///./src/*": "${workspaceFolder}/lms-react-app/src/*",
+                "webpack:///src/*": "${workspaceFolder}/lms-react-app/src/*",
                 "webpack:///*": "*"
             }
         },
