@@ -1,115 +1,208 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import Course from '../models/courseModel.js';
-import Subject from '../models/subjectModel.js';
-import Material from '../models/meterialModel.js';
+import express from "express";
+import mongoose from "mongoose";
+
+import Course from "../models/courseModel.js";
+import Subject from "../models/subjectModel.js";
+import Material from "../models/meterialModel.js";
 
 const router = express.Router();
-router.put('/update-course/:courseId', async (req, res) => {
+
+router.put("/update-course/:courseId", async (req, res) => {
   const { courseId } = req.params;
   const courseData = req.body;
-  console.log(courseData)
+
+  // Validate course ID
+  if (!mongoose.Types.ObjectId.isValid(courseId)) {
+    return res.status(400).json({
+      message: "Invalid course ID",
+    });
+  }
+
+  // Validate course data
+  if (
+    !courseData.name ||
+    !courseData.description ||
+    !courseData.duration ||
+    !courseData.imageUrl
+  ) {
+    return res.status(400).json({
+      message: "Course name, description, duration, and image URL are required.",
+    });
+  }
+
+  // Backward compatibility for previously created courses
+  const courseDurationUnit = courseData.duration_unit || "months";
 
   const session = await mongoose.startSession();
-  session.startTransaction();
 
   try {
-    // Step 1: Validate the course data
-    if (!courseData.name || !courseData.description || !courseData.duration) {
-      return res.status(400).json({ message: 'Course name, description, and duration are required.' });
-    }
+    let updatedCourse;
 
-    // Step 2: Validate subjects
-    // if (!Array.isArray(courseData.subjects) || courseData.subjects.length === 0) {
-    //   return res.status(400).json({ message: 'At least one subject is required.' });
-    // }
+    await session.withTransaction(async () => {
+      const updatedSubjects = [];
 
-    const updatedSubjects = [];
-    
-    // Step 3: Handle subject and material updates/creation
-    for (const subjectData of courseData.subjects) {
-      if (!subjectData.name || !subjectData.description || !subjectData.duration) {
-        return res.status(400).json({ message: 'Each subject must have a name, description, and duration.' });
-      }
-
-      // Step 4: Validate and create/update materials
-      const materialIds = [];
-      for (const materialData of subjectData.materials) {
-        if (!materialData.name || !materialData.content_type || !materialData.content_url) {
-          return res.status(400).json({ message: 'Each material must have a name, content type, and content URL.' });
+      // Process subjects
+      for (const subjectData of courseData.subjects || []) {
+        if (
+          !subjectData.name ||
+          !subjectData.description ||
+          !subjectData.duration
+        ) {
+          throw new Error(
+            "Each subject must have a name, description, and duration."
+          );
         }
 
-        let material;
-        if (materialData._id) {
-          // Update existing material
-          material = await Material.findByIdAndUpdate(materialData._id, materialData, { new: true, session });
+        // Backward compatibility for existing subjects
+        const subjectDurationUnit =
+          subjectData.duration_unit || "hours";
+
+        let subject;
+
+        // Step 1: Update or create subject first
+        if (subjectData._id) {
+          subject = await Subject.findByIdAndUpdate(
+            subjectData._id,
+            {
+              $set: {
+                name: subjectData.name,
+                description: subjectData.description,
+                course_id: courseId,
+                duration: Number(subjectData.duration),
+                duration_unit: subjectDurationUnit,
+              },
+            },
+            {
+              new: true,
+              session,
+              runValidators: true,
+            }
+          );
+
+          if (!subject) {
+            throw new Error(
+              `Subject not found: ${subjectData._id}`
+            );
+          }
         } else {
-          // Create new material
-          material = new Material({
-            name: materialData.name,
-            description: materialData.description,
-            content_type: materialData.content_type,
-            subject_id: subjectData._id, // To be updated later
-            content_url: materialData.content_url,
+          subject = new Subject({
+            name: subjectData.name,
+            description: subjectData.description,
+            course_id: courseId,
+            duration: Number(subjectData.duration),
+            duration_unit: subjectDurationUnit,
+            materials: [],
           });
-          await material.save({ session });
+
+          await subject.save({ session });
         }
 
-        materialIds.push(material._id);
-      }
+        // Step 2: Process materials
+        const materialIds = [];
 
-      let subject;
-      if (subjectData._id) {
-        // Update existing subject
-        subject = await Subject.findByIdAndUpdate(
-          subjectData._id,
-          { ...subjectData, materials: materialIds }, // Update materials
-          { new: true, session }
-        );
-      } else {
-        // Create new subject
-        subject = new Subject({
-          name: subjectData.name,
-          description: subjectData.description,
-          course_id: courseId, // Link the subject to the course
-          materials: materialIds,
-          duration: subjectData.duration,
-        });
+        for (const materialData of subjectData.materials || []) {
+          if (
+            !materialData.name ||
+            !materialData.content_type ||
+            !materialData.content_url
+          ) {
+            throw new Error(
+              "Each material must have a name, content type, and content URL."
+            );
+          }
+
+          let material;
+
+          if (materialData._id) {
+            // Update existing material and ensure subject relationship
+            material = await Material.findByIdAndUpdate(
+              materialData._id,
+              {
+                $set: {
+                  name: materialData.name,
+                  description: materialData.description,
+                  content_type: materialData.content_type,
+                  content_url: materialData.content_url,
+                  subject_id: subject._id,
+                },
+              },
+              {
+                new: true,
+                session,
+                runValidators: true,
+              }
+            );
+
+            if (!material) {
+              throw new Error(
+                `Material not found: ${materialData._id}`
+              );
+            }
+          } else {
+            // Create new material
+            material = new Material({
+              name: materialData.name,
+              description: materialData.description,
+              content_type: materialData.content_type,
+              content_url: materialData.content_url,
+              subject_id: subject._id,
+            });
+
+            await material.save({ session });
+          }
+
+          materialIds.push(material._id);
+        }
+
+        // Step 3: Update subject materials
+        subject.materials = materialIds;
         await subject.save({ session });
+
+        updatedSubjects.push(subject._id);
       }
 
-      updatedSubjects.push(subject._id); // Collect subject IDs
-    }
+      // Step 4: Update course
+      updatedCourse = await Course.findByIdAndUpdate(
+        courseId,
+        {
+          $set: {
+            name: courseData.name,
+            description: courseData.description,
+            duration: Number(courseData.duration),
 
-    // Step 5: Update the course with new subjects
-    const updatedCourse = await Course.findByIdAndUpdate(
-      courseId,
-      {
-        ...courseData,
-        subjects: updatedSubjects, // Reference the updated subjects
-      },
-      { new: true, session }
-    );
+            // IMPORTANT: Explicitly save duration unit
+            duration_unit: courseDurationUnit,
 
-    // Commit the transaction
-    await session.commitTransaction();
-    session.endSession();
+            imageUrl: courseData.imageUrl,
+            subjects: updatedSubjects,
+          },
+        },
+        {
+          new: true,
+          session,
+          runValidators: true,
+        }
+      );
 
-    res.status(200).json({
-      message: 'Course updated successfully',
-      course: updatedCourse,
+      if (!updatedCourse) {
+        throw new Error("Course not found");
+      }
     });
 
+    return res.status(200).json({
+      message: "Course updated successfully",
+      course: updatedCourse,
+    });
   } catch (error) {
-    // Rollback transaction in case of failure
-    await session.abortTransaction();
-    session.endSession();
+    console.error("Error updating course:", error);
 
-    // Handle error and return response
-    console.error('Error updating course:', error);
-    res.status(500).json({ message: 'Failed to update course', error });
+    return res.status(500).json({
+      message: "Failed to update course",
+      error: error.message,
+    });
+  } finally {
+    await session.endSession();
   }
 });
-
 
 export default router;

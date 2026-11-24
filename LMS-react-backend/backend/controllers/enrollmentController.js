@@ -79,3 +79,64 @@ export const enrollFreeCourse = async (
     });
   }
 };
+
+export const listEnrolledCourseByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // ==========================================
+    // VALIDATE USER ID
+    // ==========================================
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required"
+      });
+    }
+
+    // ==========================================
+    // FIND USER ENROLLMENTS
+    // ==========================================
+
+    const enrolledCourses = await Enrollment.find({
+      user: userId,
+    })
+      .populate({
+        path: "course",
+        populate: {
+          path: "created_by",
+          model: "User",
+          select: "fullname username email profilePicture",
+        },
+      })
+      .sort({ enrolledAt: -1 });
+
+    // ==========================================
+    // CHECK ENROLLMENTS
+    // ==========================================
+
+    if (!enrolledCourses || enrolledCourses.length === 0) {
+      return res.status(404).json({
+        message: "No enrolled courses found for this user"
+      });
+    }
+
+    // ==========================================
+    // RESPONSE
+    // ==========================================
+
+    return res.status(200).json({
+      message: "Enrolled courses retrieved successfully",
+      count: enrolledCourses.length,
+      enrolledCourses
+    });
+
+  } catch (error) {
+    console.error("List enrolled courses error:", error);
+
+    return res.status(500).json({
+      message: "Unable to retrieve enrolled courses",
+      error: error.message
+    });
+  }
+};

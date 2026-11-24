@@ -12,7 +12,7 @@ const InstitutionSchema = new Schema({
     },
     type: {
         type: String,
-        enum: ['College', 'School', 'Educational Center', 'Other'],
+        enum: ['College', 'School', 'Educational Center', 'Companies', 'Other'],
         required: true
     },
     location: {

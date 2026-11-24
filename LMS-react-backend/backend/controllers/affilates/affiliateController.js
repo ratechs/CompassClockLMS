@@ -99,7 +99,7 @@ export const createAffiliate = async (req, res) => {
       await generateReferralCode(user);
 
     const frontendUrl =
-      process.env.FRONTEND_URL ||
+      process.env.REACT_APP_API_URL ||
       "http://localhost:3000";
 
     const referralLink =

@@ -255,6 +255,17 @@ export const signInUser = async (req, res) => {
             });
         }
 
+        if (
+            typeof usernameOrEmail !== 'string' ||
+            typeof password !== 'string'
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid username or password'
+            });
+        }
+
+
         // Find user
         const user = await User.findOne({
             $or: [
@@ -604,7 +615,7 @@ export const getUserByRole = async (req, res) => {
         }
 
         // Find users by role (case-insensitive)
-        const users = await User.find({ role: { $regex: new RegExp(`^${role}$`, 'i') } });
+        const users = await User.find({ role: role });
 
         if (!users || users.length === 0) {
             return res.status(404).json({ message: 'No users found with the specified role' });

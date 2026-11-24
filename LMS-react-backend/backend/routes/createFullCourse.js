@@ -17,7 +17,7 @@ router.post('/create-course', async (req, res) => {
     if (!courseData.name || !courseData.description || !courseData.duration || !courseData.imageUrl) {
       console.log('Course data is missing:', courseData);
       
-      return res.status(400).json({ message: 'Course name, description, duration, and image URL are required.' });
+      return res.status(400).json({ message: 'Course name, description, duration, duration_units, and image URL are required.' });
     }
 
     // if (!Array.isArray(courseData.subjects) || courseData.subjects.length === 0) {
@@ -46,6 +46,7 @@ router.post('/create-course', async (req, res) => {
       name: courseData.name,
       description: courseData.description,
       duration: courseData.duration,
+      duration_unit: courseData.duration_unit || 'hours',
       imageUrl: courseData.imageUrl, 
       join_code: courseData.join_code || null,
       course_type: courseData.course_type || 'public',
@@ -79,6 +80,7 @@ router.post('/create-course', async (req, res) => {
         course_id: newCourse._id,
         materials: materialIds,
         duration: subjectData.duration,
+        duration_unit: subjectData.duration_unit || 'hours',
       });
 
       await newSubject.save({ session });

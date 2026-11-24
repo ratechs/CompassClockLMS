@@ -22,6 +22,11 @@ const subjectSchema = new mongoose.Schema({
         type: Number, 
         required: true 
     },
+    duration_unit: { 
+        type: String, 
+        enum: ["minute", "hour", "day", "week", "month"],
+        default: "hours"
+    },
     status: { 
         type: String, 
         enum: ['active', 'inactive'],

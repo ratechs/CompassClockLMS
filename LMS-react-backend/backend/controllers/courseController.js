@@ -95,44 +95,76 @@ export const updateCourse = async (req, res) => {
 // Delete a course
 export const deleteCourse = async (req, res) => {
   const session = await mongoose.startSession();
-  session.startTransaction(); // Start a transaction to ensure atomicity
 
   try {
-    // Step 1: Find the course and associated subjects
-    const course = await Course.findById(req.params.id).populate('subjects').session(session);
+    let deletedCourseDetails = null;
 
-    if (!course) {
-      return res.status(404).json({ error: 'Course not found' });
-    }
+    await session.withTransaction(async () => {
+      // Step 1: Find the course
+      const course = await Course.findById(req.params.id)
+        .populate("subjects")
+        .session(session);
 
-    // Capture course details for notification *before* deleting
-    const courseName = course.name;
-    const courseId = course._id.toString();
+      if (!course) {
+        const error = new Error("Course not found");
+        error.statusCode = 404;
+        throw error;
+      }
 
-    // Step 2: Extract subject IDs from the course
-    const subjectIds = course.subjects.map(subject => subject._id);
+      // Step 2: Capture course details
+      deletedCourseDetails = {
+        courseName: course.name,
+        courseId: course._id.toString(),
+      };
 
-    // Step 3: Delete associated materials for each subject
-    await Material.deleteMany({ subject_id: { $in: subjectIds } }).session(session);
+      // Step 3: Extract valid subject IDs
+      const subjectIds = (course.subjects || [])
+        .filter(Boolean)
+        .map((subject) => {
+          // Handles populated subjects and raw ObjectIds
+          return subject._id
+            ? subject._id
+            : subject;
+        });
 
-    // Step 4: Delete associated subjects
-    await Subject.deleteMany({ _id: { $in: subjectIds } }).session(session);
+      // Step 4: Delete materials associated with subjects
+      for (const subjectId of subjectIds) {
+        await Material.deleteMany({
+          subject_id: subjectId,
+        }).session(session);
+      }
 
-    // Step 5: Delete the course itself
-    await Course.findByIdAndDelete(req.params.id).session(session);
+      // Step 5: Delete associated subjects
+      for (const subjectId of subjectIds) {
+        await Subject.deleteOne({
+          _id: subjectId,
+        }).session(session);
+      }
 
-    // Commit the transaction if everything is successful
-    await session.commitTransaction();
-    session.endSession();
-    res.status(204).send(); // Successfully deleted, no content to return
+      // Step 6: Delete the course
+      await Course.deleteOne({
+        _id: course._id,
+      }).session(session);
+    });
+
+    // Transaction successful
+    return res.status(200).json({
+      message: "Course and associated subjects/materials deleted successfully",
+      deletedCourse: deletedCourseDetails,
+    });
 
   } catch (error) {
-    // Abort the transaction in case of failure
-    await session.abortTransaction();
-    session.endSession();
+    console.error("Delete Course Error:", error);
 
-    console.error(error);
-    res.status(500).json({ error: 'Error deleting course', details: error.message });
+    return res.status(error.statusCode || 500).json({
+      error: error.statusCode === 404
+        ? "Course not found"
+        : "Error deleting course",
+      details: error.message,
+    });
+
+  } finally {
+    await session.endSession();
   }
 };
 

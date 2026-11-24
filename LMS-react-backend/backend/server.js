@@ -1,12 +1,15 @@
 import express from 'express';
 import mangoDb from './db/mangoos.js';
+import mongoose from "mongoose";
 import chalk from 'chalk';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import dotenv from 'dotenv';
 
+dotenv.config();
 // ======================================================
 // ROUTES
 // ======================================================
@@ -27,15 +30,17 @@ import affilateRoutes from './routes/affilates/affiliateRoutes.js';
 // PATH SETUP
 // ======================================================
 
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+mongoose.set('sanitizeFilter', true); // Suppress deprecation warning for strictQuery
 
 // ======================================================
 // APPLICATION
 // ======================================================
 
 const app = express();
-
+app.set('trust proxy', '10.0.0.0/8');
 // ======================================================
 // ENVIRONMENT VARIABLES
 // ======================================================
@@ -89,6 +94,7 @@ console.log(chalk.cyan('========================================='));
 app.use(
     express.json({
         limit: '100mb',
+        inflate: false,
     })
 );
 
@@ -96,6 +102,7 @@ app.use(
     express.urlencoded({
         limit: '100mb',
         extended: true,
+        inflate: false,
     })
 );
 
@@ -281,6 +288,7 @@ app.use((req, res) => {
         'React build index.html not found'
     );
 });
+
 
 // ======================================================
 // PORT

@@ -68,6 +68,11 @@ const courseSchema = new mongoose.Schema(
             required: true,
             min: 1
         },
+        duration_unit: {
+            type: String,
+            enum: ["minute", "hour", "day", "week", "month"],
+            default: "hours"
+        },
 
         imageUrl: {
             type: String,
