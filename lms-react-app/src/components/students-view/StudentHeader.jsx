@@ -17,6 +17,7 @@ import Logo from "../../layouts/Logo";
 import user1 from "../../assets/images/users/user4.jpg";
 import useLogout from "../../hooks/uselogout";
 import { useAuthcontext } from "../../contexts/Authcontext";
+import { FaLongArrowAltUp, FaMeteor, FaSignOutAlt, FaTachometerAlt, FaUser } from "react-icons/fa";
 
 const StudentHeader = () => {
   const navigate = useNavigate();
@@ -118,20 +119,22 @@ const StudentHeader = () => {
                   height="40"
                   style={{ objectFit: "cover" }}
                 />
-                <span className="text-capitalize fw-semibold d-none d-sm-inline">
+                <span className="text-capitalize fw-semibold  d-sm-inline">
                   {authUser.user?.username || "User"}
                 </span>
-                <span className="caret d-none d-sm-inline">▼</span>
+                <span className="caret  d-sm-inline">▼</span>
               </DropdownToggle>
-              <DropdownMenu right style={{ marginTop: "8px", minWidth: "200px" }}>
-                <DropdownItem header className="fw-bold text-muted">
+              <DropdownMenu end style={{ marginTop: "8px", minWidth: "200px" }}>
+                {/* <DropdownItem header className="fw-bold text-muted">
                   {authUser.user?.username}
-                </DropdownItem>
-                <DropdownItem divider />
+                </DropdownItem> */}
                 <DropdownItem onClick={() => navigate("/profile")}>
-                  👤 Profile
+                  <FaUser/>
+                  <span className="mx-2">Profile</span>
                 </DropdownItem>
-                <DropdownItem
+                {
+                  authUser?.user?.role != "student" && (
+                    <DropdownItem
                   onClick={() =>
                     navigate(
                       authUser?.user?.role === "admin"
@@ -140,11 +143,15 @@ const StudentHeader = () => {
                     )
                   }
                 >
-                  📊 Dashboard
+                  <FaTachometerAlt />
+                  <span className="mx-2">Dashboard</span>
                 </DropdownItem>
+                  )
+                }
                 <DropdownItem divider />
                 <DropdownItem onClick={handleLogout} className="text-danger">
-                  🚪 Logout
+                  <FaSignOutAlt />
+                  <span className="mx-2">Logout</span>
                 </DropdownItem>
               </DropdownMenu>
             </UncontrolledDropdown>

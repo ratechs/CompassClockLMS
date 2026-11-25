@@ -245,12 +245,6 @@
 ============================================================ */
 
 .material-main-grid {
-  display: grid;
-
-  grid-template-columns: minmax(0, 1fr) 310px;
-
-  gap: 20px;
-
   align-items: start;
 }
 
@@ -267,7 +261,7 @@
 
   border-radius: 17px;
 
-  overflow: hidden;
+  overflow: visible;
 
   box-shadow: 0 8px 28px rgba(31, 35, 64, 0.055);
 }

@@ -497,11 +497,14 @@ const CourseDetails = () => {
                                     </div>
 
                                     {material?.description && (
-                                      <p>
-                                        {
-                                          material.description
-                                        }
-                                      </p>
+                                      <div
+                                        dangerouslySetInnerHTML={{
+                                          __html:
+                                            DOMPurify.sanitize(
+                                              material?.description 
+                                            ),
+                                        }}
+                                      />
                                     )}
 
                                   </div>

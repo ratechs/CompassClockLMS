@@ -12,11 +12,23 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuthcontext } from "../../contexts/Authcontext";
+import { listInstitution } from "service/baseService";
 
 const StudentProfile = () => {
   const navigate = useNavigate();
   const { authUser } = useAuthcontext();
-  console.log("The auth user", authUser)
+  const [listedInstitution, setListedInstitution] = useState({});
+
+  useEffect(() => {
+    const fetchInstitutions = async () => {
+      const institutions = await listInstitution();
+      setListedInstitution(institutions || {});
+    };
+
+    fetchInstitutions();
+  }, []);
+
+  console.log("The institution", listedInstitution)
   const user = authUser?.user
 
   const [formData, setFormData] = useState({
@@ -645,19 +657,13 @@ const StudentProfile = () => {
                 value={formData.institution}
                 onChange={handleChange}
               >
-                <option value="">
-                  Select institution
-                </option>
+                <option value="">Select Institution</option>
 
-                {/* 
-                  Replace these with institutions
-                  fetched from your API.
-                */}
-
-                <option value="other">
-                  Other
-                </option>
-
+                {Object.entries(listedInstitution || {}).map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
               </select>
 
             </div>

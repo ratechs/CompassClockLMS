@@ -397,6 +397,21 @@ const InstitutionTable = () => {
 
                         <b>{educationalCenterCount}</b>
                     </button>
+                    <button
+                        className={
+                            activeTab === "Companies"
+                                ? "institution-tab active"
+                                : "institution-tab"
+                        }
+                        onClick={() =>
+                            setActiveTab("Companies")
+                        }
+                    >
+                        <i class="bi bi-building"></i>
+                        <span>Companies</span>
+
+                        <b>{educationalCenterCount}</b>
+                    </button>
 
                 </div>
 
@@ -463,6 +478,9 @@ const InstitutionTable = () => {
                                 <option value="College">College</option>
                                 <option value="Educational Center">
                                     Educational Center
+                                </option>
+                                <option value="Companies">
+                                   Companies
                                 </option>
                             </Input>
 

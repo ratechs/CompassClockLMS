@@ -48,8 +48,9 @@ const InstitutionForm = () => {
     const navigate = useNavigate();
     const { course, loading } = useCourse();
     const filterCourses = course.filter((c) => c.course_type === 'public');
-   const adminIds = admins.map(a => a._id);
-const adminCourses = course.filter(c => adminIds.includes(c.created_by));
+    const adminIds = admins.map(a => a._id);    
+    const adminCourses = course.filter(c => adminIds.includes(c.created_by?._id));
+    console.log("the admin courses", adminCourses)
 
 
 
@@ -133,7 +134,7 @@ const adminCourses = course.filter(c => adminIds.includes(c.created_by));
                         <Row>
                             <Col md={4}>
                                 <FormGroup>
-                                    <Label>Institution Name</Label>
+                                    <Label>{formData.type} Name</Label>
                                     <Input type="text" name="name" value={formData.name} onChange={handleChange} required />
                                 </FormGroup>
                             </Col>
@@ -144,20 +145,21 @@ const adminCourses = course.filter(c => adminIds.includes(c.created_by));
                                         <option>College</option>
                                         <option>School</option>
                                         <option>Educational Center</option>
+                                        <option>Companies</option>
                                         <option>Other</option>
                                     </Input>
                                 </FormGroup>
                             </Col>
                             <Col md={4}>
                                 <FormGroup>
-                                    <Label>Institution ID</Label>
+                                    <Label>{formData.type} ID</Label>
                                     <Input type="text" name="institution_id" value={formData.institution_id} onChange={handleChange} />
                                 </FormGroup>
                             </Col>
                         </Row>
 
                         <Row className="mt-3">
-                            <Col md={12}><h6>Institution Address</h6></Col>
+                            <Col md={12}><h6>{formData.type} Address</h6></Col>
                             <Col md={4}>
                                 <FormGroup>
                                     <Label>Address</Label>
@@ -243,7 +245,7 @@ const adminCourses = course.filter(c => adminIds.includes(c.created_by));
                             </Col>
                             <Col md={4}>
                                 <FormGroup>
-                                    <Label>Institution Management Access</Label>
+                                    <Label>{formData.type} Management Access</Label>
                                     <Input
                                         type="select"
                                         name="institution_management_access"
@@ -270,7 +272,7 @@ const adminCourses = course.filter(c => adminIds.includes(c.created_by));
                                                     }}
                                                     className="text-capitalize"
                                                 >
-                                                    {user.username}
+                                                    {user.fullname}
                                                 </option>
                                             );
                                         })}

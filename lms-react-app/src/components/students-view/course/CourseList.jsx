@@ -1476,7 +1476,7 @@ const CourseList = () => {
               />
 
               <span>
-                Enroll Free
+                Enroll
               </span>
             </>
           )}
@@ -2037,7 +2037,11 @@ const CourseList = () => {
 
                             {/* Visibility */}
 
-                            <div className="course-type-badge">
+                            <div  className={`course-type-badge ${
+                                getCourseVisibility(course) === "private"
+                                  ? "text-red"
+                                  : "text-success"
+                              }`}>
                               <FontAwesomeIcon
                                 icon={
                                   getCourseVisibility(
@@ -2048,6 +2052,7 @@ const CourseList = () => {
                                     : faUnlock
                                 }
                               />
+                              <span>{getCourseVisibility(course) === "private" ? "Approval Required" : "Free"}</span>
                               {/* {getCourseVisibility(
                                   course
                                 ) ===
@@ -2211,9 +2216,9 @@ const CourseList = () => {
 
                             {/* Status */}
 
-                            {renderStatusBanner(
+                            {/* {renderStatusBanner(
                               course
-                            )}
+                            )} */}
 
                             {/* Actions */}
 

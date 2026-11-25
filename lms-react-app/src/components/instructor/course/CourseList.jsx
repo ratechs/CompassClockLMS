@@ -16,6 +16,8 @@ import {
 } from "reactstrap";
 
 import defaultImage from "../../../assets/images/default_images/images.jpg";
+import { getDurationUnits } from "service/baseService";
+import { FaHeart, FaUser } from "react-icons/fa";
 
 const CourseList = () => {
   const [courses, setCourses] = useState([]);
@@ -273,10 +275,6 @@ const CourseList = () => {
                           Duration
                         </th>
 
-                        <th className="text-nowrap">
-                          Intrests
-                        </th>
-
                         <th className="text-nowrap text-center">
                           Actions
                         </th>
@@ -298,6 +296,16 @@ const CourseList = () => {
                               alt={course.name || "Course"}
                               className="course-image-list"
                             />
+                            <p>
+                               <FaHeart size={10} color="red"/> 
+                               <small className="m-1" style={{ color: "gray", fontSize: "10px" }}>
+                                 {course.interested_users_count || 0}
+                               </small>
+                               <FaUser size={10} color="blue"/> 
+                               <small className="ms-1" style={{ color: "gray", fontSize: "10px" }}>
+                                 {course?.joinRequests.length || 0}
+                               </small>
+                            </p>
                           </td>
 
                           {/* Course Name */}
@@ -324,11 +332,7 @@ const CourseList = () => {
                           {/* Duration */}
                           <td>
                             {course.duration || "-"}
-                          </td>
-
-                          {/* Interests */}
-                          <td>
-                            {course.interested_users_count || "0"}
+                            <small> {getDurationUnits(course.duration, course.duration_unit)}</small>
                           </td>
 
                           {/* Actions */}

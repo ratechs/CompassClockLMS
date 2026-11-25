@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthcontext } from "../contexts/Authcontext";
 import { isArray } from 'lodash';
+import toast from 'react-hot-toast';
 
 export const courseListService = async () => {
   const data = await axios.get('/api/courses')
@@ -18,30 +19,14 @@ export const getUser = async (id) => {
   return data
 }
 
-export const CurrentUserService = async (user) => {
-  const courses = await courseListService();
-  const getUserData = await getUser(user?._id);
-  const currentUser = getUserData?.data;
-
-  // Handle course lists returned directly or inside response.data
-  const courseList = Array.isArray(courses)
-    ? courses
-    : Array.isArray(courses?.data)
-      ? courses.data
-      : [];
-  if (!Array.isArray(currentUser?.courses) || currentUser.courses.length === 0) {
-    return [];
+export const CurrentUserEnrollments = async (user) => {
+  console.log("The user data inside the current user service", user)
+  try {
+    const data = await axios.get(`/api/enrollments/${user}`)
+    return data?.data
+  } catch (error) {
+    toast.error("Error", error?.message)
   }
-
-  const userCourseIds = new Set(
-    currentUser.courses.map((course) =>
-      String(typeof course === "object" ? course?._id : course)
-    )
-  );
-  
-  return courseList.filter((course) =>
-    userCourseIds.has(String(course?._id))
-  );
 };
 
 export const studentCourseListService = async (id) => {
@@ -153,4 +138,30 @@ export const getCurrentUser = ()=>{
   const currentUser = JSON.parse(localStorage.getItem('lms-user'))?.user;
   return currentUser;
 }
+
+export const getDurationUnits = (duration, unit) => {
+  if (unit?.includes("s")) {
+    unit = unit.slice(0, -1); // Remove the 's' at the end
+  }
+  const getCurrentUnit = duration > 1 ? `${unit}s` : unit;
+  return getCurrentUnit;
+}
+
+export const listInstitution = async () => {
+  try {
+    const getAllIns = await axios.get("api/institutions");
+
+    const institutions = getAllIns?.data?.data || [];
+
+    const institutionList = institutions.reduce((acc, institution) => {
+      acc[institution._id] = institution.name;
+      return acc;
+    }, {});
+    return institutionList;
+
+  } catch (error) {
+    toast.error("Error getting institutions");
+    return {};
+  }
+};
 

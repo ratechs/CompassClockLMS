@@ -13,12 +13,14 @@ import {
   Row,
   Col,
   Spinner,
+  InputGroup,
 } from "reactstrap";
 
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 import { useAuthcontext } from "../../../contexts/Authcontext";
+import { getDurationUnits } from "service/baseService";
 
 const TABS = {
   COURSE: "course",
@@ -37,6 +39,7 @@ const createEmptySubject = () => ({
   name: "",
   description: "",
   duration: "",
+  duration_unit: "months",
   materials: [createEmptyMaterial()],
 });
 
@@ -62,6 +65,7 @@ const CourseForm = () => {
     name: "",
     description: "",
     duration: "",
+    duration_unit: "months",
     imageUrl: "",
     course_type: "public",
     is_paidCourse: false,
@@ -91,26 +95,26 @@ const CourseForm = () => {
 
     ...(includeSubjects
       ? [
-          {
-            id: TABS.SUBJECTS,
-            number: "02",
-            title: "Subjects",
-            description: "Course structure",
-            icon: "bi bi-journal-text",
-          },
-        ]
+        {
+          id: TABS.SUBJECTS,
+          number: "02",
+          title: "Subjects",
+          description: "Course structure",
+          icon: "bi bi-journal-text",
+        },
+      ]
       : []),
 
     ...(includeMaterials
       ? [
-          {
-            id: TABS.MATERIALS,
-            number: includeSubjects ? "03" : "02",
-            title: "Materials",
-            description: "Learning content",
-            icon: "bi bi-file-earmark-text",
-          },
-        ]
+        {
+          id: TABS.MATERIALS,
+          number: includeSubjects ? "03" : "02",
+          title: "Materials",
+          description: "Learning content",
+          icon: "bi bi-file-earmark-text",
+        },
+      ]
       : []),
   ];
 
@@ -167,16 +171,17 @@ const CourseForm = () => {
               _id: subject?._id || "",
               name: subject?.name || "",
               description: subject?.description || "",
-              duration: subject?.duration || "",
+              duration: subject?.duration ?? "",
+              duration_unit: subject?.duration_unit || "months",
 
               materials: Array.isArray(subject?.materials)
                 ? subject.materials.map((material) => ({
-                    _id: material?._id || "",
-                    name: material?.name || "",
-                    description: material?.description || "",
-                    content_type: material?.content_type || "",
-                    content_url: material?.content_url || "",
-                  }))
+                  _id: material?._id || "",
+                  name: material?.name || "",
+                  description: material?.description || "",
+                  content_type: material?.content_type || "",
+                  content_url: material?.content_url || "",
+                }))
                 : [],
             })
           );
@@ -194,7 +199,8 @@ const CourseForm = () => {
           _id: fetchedCourseData?._id || "",
           name: fetchedCourseData?.name || "",
           description: fetchedCourseData?.description || "",
-          duration: fetchedCourseData?.duration || "",
+          duration: fetchedCourseData?.duration ?? "",
+          duration_unit: fetchedCourseData?.duration_unit || "months",
           imageUrl: fetchedCourseData?.imageUrl || "",
 
           course_type:
@@ -225,7 +231,7 @@ const CourseForm = () => {
 
         toast.error(
           error?.response?.data?.message ||
-            "Failed to load course data."
+          "Failed to load course data."
         );
       } finally {
         setFetching(false);
@@ -656,29 +662,30 @@ const CourseForm = () => {
     try {
       const cleanedSubjects = includeSubjects
         ? courseData.subjects.map((subject) => ({
-            ...(subject._id
-              ? { _id: subject._id }
-              : {}),
+          ...(subject._id
+            ? { _id: subject._id }
+            : {}),
 
-            name: subject.name.trim(),
-            description: subject.description || "",
-            duration: Number(subject.duration),
+          name: subject.name.trim(),
+          description: subject.description || "",
+          duration: Number(subject.duration),
+          duration_unit: subject.duration_unit || "months",
 
-            materials: includeMaterials
-              ? (subject.materials || []).map(
-                  (material) => ({
-                    ...(material._id
-                      ? { _id: material._id }
-                      : {}),
+          materials: includeMaterials
+            ? (subject.materials || []).map(
+              (material) => ({
+                ...(material._id
+                  ? { _id: material._id }
+                  : {}),
 
-                    name: material.name.trim(),
-                    description: material.description || "",
-                    content_type: material.content_type,
-                    content_url: material.content_url,
-                  })
-                )
-              : [],
-          }))
+                name: material.name.trim(),
+                description: material.description || "",
+                content_type: material.content_type,
+                content_url: material.content_url,
+              })
+            )
+            : [],
+        }))
         : [];
 
       const payload = {
@@ -687,6 +694,7 @@ const CourseForm = () => {
         description: courseData.description,
 
         duration: Number(courseData.duration),
+        duration_unit: courseData.duration_unit || "months",
 
         imageUrl: courseData.imageUrl || "",
 
@@ -740,9 +748,9 @@ const CourseForm = () => {
 
       toast.error(
         error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          error?.response?.data?.details ||
-          "Error submitting form. Please try again."
+        error?.response?.data?.error ||
+        error?.response?.data?.details ||
+        "Error submitting form. Please try again."
       );
     } finally {
       setLoading(false);
@@ -855,11 +863,9 @@ const CourseForm = () => {
               <button
                 key={step.id}
                 type="button"
-                className={`step ${
-                  isActive ? "active" : ""
-                } ${
-                  isCompleted ? "completed" : ""
-                }`}
+                className={`step ${isActive ? "active" : ""
+                  } ${isCompleted ? "completed" : ""
+                  }`}
                 onClick={() => goToStep(step.id)}
               >
                 <div className="step-icon">
@@ -913,7 +919,7 @@ const CourseForm = () => {
               {/* BASIC INFORMATION */}
 
               <Row>
-                <Col xs="12" md="8">
+                <Col xs="12" md="8" className="mb-3 mb-md-0">
                   <FormGroup>
                     <Label className="form-label-custom">
                       Course Name
@@ -932,27 +938,39 @@ const CourseForm = () => {
                   </FormGroup>
                 </Col>
 
-                <Col xs="12" md="4">
+                <Col xs="12" md="3">
                   <FormGroup>
-                    <Label className="form-label-custom">
-                      Duration
-                    </Label>
+                    <Label className="form-label-custom">Duration</Label>
 
-                    <Input
-                      className="form-control"
-                      type="number"
-                      min="1"
-                      value={courseData.duration}
-                      placeholder="Months"
-                      onChange={(e) =>
-                        handleCourseChange("duration", e.target.value)
-                      }
-                      required
-                    />
+                    <InputGroup>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={courseData.duration}
+                        placeholder="Duration"
+                        onChange={(e) =>
+                          handleCourseChange("duration", e.target.value)
+                        }
+                        required
+                        style={{ maxWidth: "80px", marginBottom: "0px" }}
+                      />
 
-                    <small className="form-help">
-                      Course duration in months.
-                    </small>
+                      <Input
+                        type="select"
+                        value={courseData.duration_unit}
+                        onChange={(e) =>
+                          handleCourseChange("duration_unit", e.target.value)
+                        }
+                        required
+                        style={{ maxWidth: "130px", marginBottom: "0px", textTransform: "capitalize" }}
+                      >
+                        <option value="minute">{getDurationUnits(courseData?.duration, "minute")}</option>
+                        <option value="hour">{getDurationUnits(courseData?.duration, "hour")}</option>
+                        <option value="day">{getDurationUnits(courseData?.duration, "day")}</option>
+                        <option value="week">{getDurationUnits(courseData?.duration, "week")}</option>
+                        <option value="month">{getDurationUnits(courseData?.duration, "month")}</option>
+                      </Input>
+                    </InputGroup>
                   </FormGroup>
                 </Col>
               </Row>
@@ -990,6 +1008,8 @@ const CourseForm = () => {
                         ],
                         ["link", "image"],
                         ["clean"],
+                        ["Table"],
+
                       ],
                     }}
                   />
@@ -1471,7 +1491,7 @@ const CourseForm = () => {
                           </FormGroup>
                         </Col>
 
-                        <Col xs="12" md="4">
+                        <Col xs="12" md="2">
                           <FormGroup>
                             <Label className="form-label-custom">
                               Duration
@@ -1482,7 +1502,7 @@ const CourseForm = () => {
                               type="number"
                               min="1"
                               value={subject.duration}
-                              placeholder="Months"
+                              placeholder="Enter duration"
                               onChange={(e) =>
                                 handleSubjectChange(
                                   subjectIndex,
@@ -1492,6 +1512,34 @@ const CourseForm = () => {
                               }
                               required
                             />
+                          </FormGroup>
+                        </Col>
+
+                        <Col xs="12" md="2">
+                          <FormGroup>
+                            <Label className="form-label-custom">
+                              Period
+                            </Label>
+
+                            <Input
+                              className="form-select"
+                              type="select"
+                              value={subject.duration_unit || "months"}
+                              onChange={(e) =>
+                                handleSubjectChange(
+                                  subjectIndex,
+                                  "duration_unit",
+                                  e.target.value
+                                )
+                              }
+                              required
+                            >
+                              <option value="minutes">Minutes</option>
+                              <option value="hours">Hours</option>
+                              <option value="days">Days</option>
+                              <option value="weeks">Weeks</option>
+                              <option value="months">Months</option>
+                            </Input>
                           </FormGroup>
                         </Col>
 
