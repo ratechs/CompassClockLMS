@@ -167,12 +167,12 @@ app.use('/api/courses', UpdateFullCourse);
 // REACT FRONTEND PATH
 // ======================================================
 
-const clientBuildPath = path.resolve(
-    __dirname,
-    '../../lms-react-app/build'
-);
+// const clientBuildPath = path.resolve(
+//     __dirname,
+//     '../../lms-react-app/build'
+// );
 
-// const clientBuildPath = path.resolve(__dirname, '../build');
+const clientBuildPath = path.resolve(__dirname, '../build');
 
 console.log(
     chalk.blue(

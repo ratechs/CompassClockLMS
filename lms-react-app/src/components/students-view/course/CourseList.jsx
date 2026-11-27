@@ -1519,7 +1519,7 @@ const CourseList = () => {
               />
 
               <span>
-                Enroll Free
+                Enroll
               </span>
             </>
           )}
